@@ -154,10 +154,13 @@ def build_plan(sensors_path: Path,
                ) -> dict:
     cfg = load_config()
     sensors = load_sensors(sensors_path)
+    # sensors.logical is the v0.2 baseline; the live layout may differ once
+    # reallocation / operator additions have run. Warn on a shrink (likely a
+    # broken file), but plan whatever positions are actually deployed.
     expected = cfg.get("sensors.logical")
-    if len(sensors) != expected:
-        raise ValueError(f"expected {expected} logical sensors "
-                         f"(config: sensors.logical), got {len(sensors)}")
+    if len(sensors) < expected:
+        print(f"warning: {len(sensors)} logical sensors, fewer than the "
+              f"{expected} baseline (config: sensors.logical) — planning anyway")
 
     assignment = plan_channels(sensors, CHANNELS_24GHZ, neighbor_radius_m)
     stats = plan_stats(sensors, assignment, CHANNELS_24GHZ,

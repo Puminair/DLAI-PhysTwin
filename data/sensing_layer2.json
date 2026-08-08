@@ -1,10 +1,10 @@
 {
  "provenance": {
   "generator": "scripts/generate_data.py",
-  "dataset_version": "1.0-parametric+v0.3-reallocated",
+  "dataset_version": "1.0-parametric+v0.3-reallocated+add3",
   "seed": 20140457,
-  "note": "applied data/reallocation_proposal.json (k=8): removed perimeter ['S000', 'S001', 'S002', 'S013', 'S014', 'S015', 'S016', 'S017'], added BOH ['S150', 'S151', 'S152', 'S153', 'S154', 'S155', 'S156', 'S157']; proven at 5 GHz BOH >=3AP 66.9->74.8 pct",
-  "applied_by": "scripts/apply_reallocation.py"
+  "note": "applied data/reallocation_proposal.json (k=8): removed perimeter ['S000', 'S001', 'S002', 'S013', 'S014', 'S015', 'S016', 'S017'], added BOH ['S150', 'S151', 'S152', 'S153', 'S154', 'S155', 'S156', 'S157']; proven at 5 GHz BOH >=3AP 66.9->74.8 pct | added 3 Meraki-managed units (['S158', 'S159', 'S160']): fill NE warehouse cold-room-shadow gaps (operator: 3 Meraki units)",
+  "applied_by": "scripts/add_sensors.py"
  },
  "mount_z_m": 3.0,
  "sensors": [
@@ -1357,6 +1357,39 @@
    "zone": "back_of_house",
    "model": "CW9172I",
    "units": 2
+  },
+  {
+   "sensor_id": "S158",
+   "x": 96.3,
+   "y": 47.4,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2,
+   "managed_by": "meraki_dashboard",
+   "provenance": "fill NE warehouse cold-room-shadow gaps (operator: 3 Meraki units)"
+  },
+  {
+   "sensor_id": "S159",
+   "x": 97.2,
+   "y": 36.2,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2,
+   "managed_by": "meraki_dashboard",
+   "provenance": "fill NE warehouse cold-room-shadow gaps (operator: 3 Meraki units)"
+  },
+  {
+   "sensor_id": "S160",
+   "x": 85.3,
+   "y": 46.7,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2,
+   "managed_by": "meraki_dashboard",
+   "provenance": "fill NE warehouse cold-room-shadow gaps (operator: 3 Meraki units)"
   }
  ]
 }

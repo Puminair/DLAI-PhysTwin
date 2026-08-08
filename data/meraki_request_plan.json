@@ -5,14 +5,14 @@
   "org_id": "{{orgId}}",
   "network_id": "{{networkId}}",
   "inputs": {
-   "sensors": "data/sensing_layer2.json (150 logical positions)",
+   "sensors": "data/sensing_layer2.json (153 logical positions)",
    "rf_profiles": "config/rf_profiles.yaml",
    "channel_plan": "data/channel_plan.json",
    "serials": "absent (per-AP entries marked serial: UNMAPPED)"
   },
   "fallbacks": [],
-  "unmapped_serials": 150,
-  "request_count": 157,
+  "unmapped_serials": 153,
+  "request_count": 160,
   "secrets": "api key: env MERAKI_API_KEY only; scanning secret: sentinel ENV:MERAKI_SCANNING_SECRET, resolved at --apply, never written to this file"
  },
  "requests": [
@@ -2056,6 +2056,36 @@
    "sensor_id": "S157",
    "serial": "UNMAPPED",
    "note": "bind S157 (zone back_of_house) to centro-back-of-house; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S158}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-back-of-house}}"
+   },
+   "sensor_id": "S158",
+   "serial": "UNMAPPED",
+   "note": "bind S158 (zone back_of_house) to centro-back-of-house; WARNING: no channel in channel_plan.json"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S159}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-back-of-house}}"
+   },
+   "sensor_id": "S159",
+   "serial": "UNMAPPED",
+   "note": "bind S159 (zone back_of_house) to centro-back-of-house; WARNING: no channel in channel_plan.json"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S160}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-back-of-house}}"
+   },
+   "sensor_id": "S160",
+   "serial": "UNMAPPED",
+   "note": "bind S160 (zone back_of_house) to centro-back-of-house; WARNING: no channel in channel_plan.json"
   },
   {
    "method": "PUT",

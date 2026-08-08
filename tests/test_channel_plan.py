@@ -76,10 +76,12 @@ def test_plan_file_exists_after_running_planner(
     assert out.exists()
 
 
-def test_all_150_sensors_assigned(plan: dict, sensors: list[dict]) -> None:
+def test_every_deployed_sensor_assigned(plan: dict, sensors: list[dict]) -> None:
+    # count is whatever the live layout holds (v0.2 baseline was 150; it
+    # grows/shrinks with reallocation and operator additions)
     assigned_ids = {a["sensor_id"] for a in plan["assignments"]}
     assert assigned_ids == {s["sensor_id"] for s in sensors}
-    assert len(plan["assignments"]) == 150
+    assert len(plan["assignments"]) == len(sensors)
 
 
 def test_only_nonoverlapping_channels_used(plan: dict) -> None:
@@ -98,11 +100,12 @@ def test_deterministic_two_runs_identical(
     assert out_a.read_bytes() == out_b.read_bytes()
 
 
-def test_channel_balance_each_used_at_least_40_times(plan: dict) -> None:
+def test_channel_balance_each_used_at_least_40_times(plan: dict,
+                                                     sensors: list[dict]) -> None:
     counts = plan["stats"]["per_channel_counts"]
     for ch in ("1", "6", "11"):
         assert counts[ch] >= 40, f"channel {ch} used only {counts[ch]} times"
-    assert sum(counts.values()) == 150
+    assert sum(counts.values()) == len(sensors)
 
 
 def _pairwise_lt(sensors: list[dict], ids: tuple[str, ...],

@@ -43,8 +43,8 @@
   failure, not a coverage one.<br>
   <span style="color:#e8a33e">■</span> staff · <span style="color:#9aa5b5">■</span> shoppers —
   every body on the floor absorbs RF.<br>
-  <span style="color:#53b7e8">●●</span> 150 logical points × 2 CW9172I units = 300 heads
-  @ 3.00 m (+2.5 dB selection diversity).</div>
+  <span style="color:#53b7e8">●●</span> <span id="sensorCount">…</span> @ 3.00 m
+  (+2.5 dB selection diversity).</div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 "use strict";
@@ -217,6 +217,9 @@ fetch("scene.json").then(r=>r.json()).then(payload => {
     layers.sensors.add(bar);
     sensorPos.set(s.sensor_id, [s.x, s.y, s.z]);
   }
+  const nHeads = sc.sensors.reduce((a, s) => a + (s.units ?? 2), 0);
+  document.getElementById("sensorCount").textContent =
+    `${sc.sensors.length} logical points × 2 CW9172I units = ${nHeads} heads`;
   const sel = document.getElementById("bandSel");
   for(const b of Object.keys(coverageData)){
     const o = document.createElement("option"); o.value=b; o.textContent=b+" GHz";

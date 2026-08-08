@@ -3,7 +3,7 @@
   "generator": "scripts/generate_data.py",
   "dataset_version": "1.0-parametric",
   "seed": 20140457,
-  "note": "extruded from store_layer1.geojson | sensors: v0.3-reallocated"
+  "note": "extruded from store_layer1.geojson | sensors: v0.3-reallocated | +3 Meraki units"
  },
  "envelope": {
   "ring": [
@@ -12548,6 +12548,39 @@
    "zone": "back_of_house",
    "model": "CW9172I",
    "units": 2
+  },
+  {
+   "sensor_id": "S158",
+   "x": 96.3,
+   "y": 47.4,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2,
+   "managed_by": "meraki_dashboard",
+   "provenance": "fill NE warehouse cold-room-shadow gaps (operator: 3 Meraki units)"
+  },
+  {
+   "sensor_id": "S159",
+   "x": 97.2,
+   "y": 36.2,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2,
+   "managed_by": "meraki_dashboard",
+   "provenance": "fill NE warehouse cold-room-shadow gaps (operator: 3 Meraki units)"
+  },
+  {
+   "sensor_id": "S160",
+   "x": 85.3,
+   "y": 46.7,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2,
+   "managed_by": "meraki_dashboard",
+   "provenance": "fill NE warehouse cold-room-shadow gaps (operator: 3 Meraki units)"
   }
  ]
 }

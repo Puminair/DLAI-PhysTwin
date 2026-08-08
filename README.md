@@ -50,14 +50,21 @@ parametric layout.
 
 ## What the model shows (this dataset, 2 m grid, cart-panel height 1.00 m)
 
-Current layout (v0.3 — the 8-unit perimeter→BOH reallocation is EXECUTED,
-see `scripts/apply_reallocation.py`; v0.2 baseline in parentheses):
+Current layout (153 logical positions): the 8-unit perimeter→BOH
+reallocation is EXECUTED (`scripts/apply_reallocation.py`) and 3
+operator-added Meraki-managed units fill the NE warehouse gaps
+(`scripts/add_sensors.py`). v0.2 baseline (150, pre-reallocation) in
+parentheses:
 
 | band | sales ≥3 AP | sales blind | BOH ≥3 AP | BOH blind |
 |---|---|---|---|---|
 | 2.4 | 99.5 % | 0.5 % | 96.3 % (95.4) | 3.7 % (3.7) |
-| 5 | 99.3 % (99.5) | 0.5 % | 74.8 % (66.9) | 6.1 % (17.2) |
-| 6 | 99.1 % (99.3) | 0.5 % | 73.3 % (66.0) | 6.1 % (17.8) |
+| 5 | 99.3 % (99.5) | 0.5 % | 80.7 % (66.9) | 4.6 % (17.2) |
+| 6 | 99.1 % (99.3) | 0.5 % | 79.8 % (66.0) | 4.6 % (17.8) |
+
+The BOH story across the two changes: 5 GHz ≥3-AP went 66.9 → 74.8
+(reallocation) → 80.7 % (+3 units), blind 17.2 → 6.1 → 4.6 %. What is
+left is cold-room shadow — opaque conductors no placement reaches.
 
 Two spec findings reproduce cleanly: **2.4 GHz wins decisively** wherever
 gondola crossings dominate, and **back of house collapses at 5/6 GHz** (28

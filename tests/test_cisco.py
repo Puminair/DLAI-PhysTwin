@@ -49,10 +49,15 @@ def test_dry_run_plan_is_deterministic_against_real_repo():
     b = mp.build_plan(**kwargs)
     assert json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True), (
         "same inputs must yield a byte-identical plan")
-    # all 150 logical positions get a per-AP radio-settings entry
+    # every deployed logical position gets a per-AP radio-settings entry —
+    # count is read from the live layout, not hardcoded (it grows with
+    # reallocation and operator-added Meraki units)
+    import json as _json
+    n_sensors = len(_json.loads(
+        (mp.REPO_ROOT / "data" / "sensing_layer2.json").read_text())["sensors"])
     per_ap = [r for r in a["requests"]
               if r["method"] == "PUT" and "radio/settings" in (r["path"] or "")]
-    assert len(per_ap) == 150
+    assert len(per_ap) == n_sensors
     assert a["provenance"]["request_count"] == len(a["requests"])
 
 
