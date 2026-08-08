@@ -1,0 +1,268 @@
+# config/alerts.yaml — contextual alert catalog for Yochananof Centro Rehovot.
+#
+# These alerts are defined by THIS building's context, not generic IDS noise:
+#   - five neighbour Wi-Fi networks share this floor and the floor above
+#     (CLAUDE.md §5, data/aireye_emulator_spec.json) — a rogue SSID without
+#     wire evidence is probably a neighbour; `wiredMacs` is the only
+#     discriminator;
+#   - aWIPS syslog carries NO client identity and is throttled to one message
+#     per signature per AP per interval (CLAUDE.md §5) — attack intensity is
+#     unknowable and no alert may estimate it;
+#   - Air Marshal containment time-splits the scanning radio and degrades
+#     RTLS accuracy (CLAUDE.md §5) — containment is itself an operational risk;
+#   - inside/outside discrimination DOES NOT WORK (CLAUDE.md §9: a modem 8 m
+#     outside is heard by 41 sensors at −44 dBm) — no alert claims a device is
+#     "inside" or "outside" on RF evidence alone;
+#   - position flicker around the 3-AP rule makes single fixes untrustworthy
+#     (CLAUDE.md §5, dlai/policy.py `position_flicker`) — position-triggered
+#     alerts require sustained evidence.
+#
+# DELIBERATE NON-ALERTS (do not add them back):
+#   - downlink RSSI anomalies: RRM moves AP Tx power 2–26 dBm every 30 min
+#     (config/defaults.yaml sensors.rrm) — downlink swings are EXPECTED and
+#     alerting on them is pure noise;
+#   - "device outside the store": the 18 perimeter units cannot separate
+#     inside from outside (CLAUDE.md §9) — no such alert can exist honestly.
+#
+# Mode is RECOMMEND_ONLY throughout: every `action` is a recommendation
+# sentence for a human operator; nothing here authorises enforcement.
+
+meta:
+  mode: RECOMMEND_ONLY
+  # assumed — one alert per (alert_id, subject) per 5 min matches an operator
+  # acknowledgement cadence; overridable at runtime (AlertEngine constructor).
+  dedup_window_ms: 300000
+
+alerts:
+  - id: rogue_ap_on_wire
+    title: Rogue AP bridged to the store network
+    severity: high
+    streams: [air_marshal]
+    context_conditions:
+      zone: any            # RF cannot localise it to a zone honestly (§9)
+      required_fields: [bssid, wiredMacs]
+      wired_macs_min: 1    # verified rule — wiredMacs is THE discriminator;
+                           # without wire evidence this building's five
+                           # neighbour networks make the FP rate unusable
+    evidence_required: [wiredMacs, wiredVlans, channel]
+    action: >-
+      Recommend isolating the switch port carrying the reported wired MACs
+      and dispatching staff to locate the device physically; do not rely on
+      RF position — the device may sit anywhere on or off the sales floor.
+    known_blind_spots:
+      - "RF alone cannot say whether the device is physically inside or outside the store (a device 8 m outside is heard by dozens of sensors)"
+      - "the rogue's position estimate, if any, is inferred and degrades further if containment is active"
+
+  - id: rogue_ap_on_pos_vlan
+    title: Rogue AP bridged to the POS VLAN — payment infrastructure exposure
+    severity: high
+    streams: [air_marshal]
+    context_conditions:
+      zone: any
+      required_fields: [bssid, wiredMacs, wiredVlans]
+      wired_macs_min: 1
+      # deployment knowledge (assumed, overridable): VLAN 12 is the POS/ops
+      # segment in the AirEye scenario (sensing/aireye.py rogue_on_wire_record
+      # emits wired_vlans=[12]); update from the real switch config on deploy.
+      pos_vlans: [12]
+    evidence_required: [wiredMacs, wiredVlans, channel]
+    action: >-
+      Recommend treating this as a payment-infrastructure incident: notify the
+      security lead immediately, recommend switch-port isolation of the wired
+      MAC on the POS VLAN, and open a PCI incident review.
+    known_blind_spots:
+      - "RF alone cannot place the device inside or outside the store"
+      - "wire evidence proves L2 attachment, not what traffic has already crossed it"
+
+  - id: evil_twin_ops_ssid
+    title: SSID resembling the ops network seen on air, no wire evidence
+    severity: warn         # NOT high — without wiredMacs, in this building it
+                           # is most likely one of the five neighbour networks
+                           # on this floor or the floor above (CLAUDE.md §5)
+    streams: [air_marshal]
+    context_conditions:
+      zone: any
+      required_fields: [bssid, ssid]
+      wired_macs_min: 0    # fires precisely when wire evidence is ABSENT
+      # deployment knowledge — the store's own SSIDs (dlai/attack.py
+      # AttackAnalyzer default); anything resembling them without wire
+      # evidence is a candidate evil twin.
+      own_ssids: [centro-ops]
+    evidence_required: [ssid, bssid, encryption]
+    action: >-
+      Recommend on-air verification against the neighbour catalogue before
+      any containment decision — containment time-splits the scanning radio
+      and degrades RTLS accuracy for the whole floor.
+    known_blind_spots:
+      - "no wire evidence: five neighbour networks share this floor and the floor above — this may be a neighbour, not an attack"
+      - "RF cannot determine whether the transmitter is inside or outside the store"
+
+  - id: deauth_flood
+    title: Deauthentication activity reported by aWIPS
+    severity: warn
+    streams: [awips_syslog]
+    context_conditions:
+      zone: any
+      required_fields: [signature, apMac]
+      # NO count threshold on purpose: aWIPS is throttled to one message per
+      # signature per AP per interval (CLAUDE.md §5) — any frame count derived
+      # from this stream would be fiction. One report is the trigger.
+    evidence_required: [signature, apMac, gap]
+    action: >-
+      Recommend correlating deauth reports across APs by time bucket to bound
+      the affected area; attack intensity is unknown and not recoverable from
+      this stream — do not estimate it.
+    known_blind_spots:
+      - "intensity unknown: throttling to one message per signature per AP per interval destroys the frame count"
+      - "no client identity: aWIPS syslog cannot say which client was targeted"
+      - "the attacker's position cannot be established, inside or outside the store"
+
+  - id: containment_active_rtls_risk
+    title: Air Marshal containment active — RTLS accuracy degraded
+    severity: warn
+    streams: [air_marshal, scanning_api]
+    context_conditions:
+      zone: any
+      required_fields: []
+      # trigger is the gap flag itself — sensing/observation.py
+      # GAP_CONTAINMENT_DEGRADED ("containment_rtls_degraded") on any record,
+      # or contained=true on an Air Marshal record. Verified side effect:
+      # the scanning radio time-splits while containing (CLAUDE.md §5).
+      gap_flag: containment_rtls_degraded
+    evidence_required: [gap]
+    action: >-
+      Recommend time-boxing the containment operation and treating every
+      position-derived alert as low-trust until it ends; the scanning radio
+      is time-split and location accuracy is degraded floor-wide.
+    known_blind_spots:
+      - "cannot quantify the accuracy loss per track while containment runs"
+      - "positioning alerts raised during this window may be artefacts"
+
+  - id: cart_mac_duplicate
+    title: Cart panel MAC seen at two irreconcilable positions
+    severity: high
+    streams: [scanning_api, dlai_track]
+    context_conditions:
+      zone: any
+      required_fields: [clientMac, locations]
+      # deployment knowledge (assumed, overridable): cart panel vendor OUI
+      # from procurement; panels have stable MACs on 2.4 GHz
+      # (data/device_models.json cart_panel.mac_policy=stable_per_device).
+      cart_oui_prefixes: ["0c:8b:7d"]
+      # 30 m in <5 s: max cart speed is 1.2 m/s (config motion.cart_speed_ms)
+      # so a real cart moves ≤6 m in 5 s; 30 m is a 5× margin over RTLS gross
+      # error, so both fixes cannot belong to one physical panel.
+      displacement_m: 30.0
+      window_s: 5.0
+    evidence_required: [clientMac, fix_a, fix_b, displacement_m, dt_s]
+    action: >-
+      Recommend physical inspection of the cart carrying this panel and
+      auditing the dock inventory for a cloned or spoofed panel; treat the
+      track as low-trust until reconciled.
+    known_blind_spots:
+      - "cannot distinguish MAC cloning from a gross RTLS error on a single pair of fixes — both positions are inferred, not observed"
+      - "cannot say which of the two sightings is the genuine panel"
+
+  - id: cart_impossible_motion
+    title: Cart panel track shows sustained impossible motion
+    severity: warn
+    streams: [dlai_track]
+    context_conditions:
+      zone: any
+      required_fields: [clientMac]
+      cart_oui_prefixes: ["0c:8b:7d"]   # same provenance as cart_mac_duplicate
+      # 1.4 m/s = config motion.cart_speed_ms upper bound (1.2) + margin;
+      # the elimination rule in dlai/entity.py uses the same physics.
+      max_speed_ms: 1.4
+      # sustained evidence required: single fixes are untrustworthy under
+      # position flicker (CLAUDE.md §5, dlai/policy.py position_flicker) —
+      # three consecutive violating fixes before the alert may fire.
+      sustained_fixes: 3
+    evidence_required: [clientMac, fixes, speeds_ms]
+    action: >-
+      Recommend reviewing the track against the flicker metric before any
+      dispatch; if flicker is low and the motion persists, recommend physical
+      verification of the panel for spoofing.
+    known_blind_spots:
+      - "a flickering track produces zigzags that mimic impossible motion — the low-trust track state must be checked first"
+      - "all positions are inferred distributions, never observations"
+
+  - id: probe_surge_unassociated
+    title: Surge of distinct unassociated devices probing
+    severity: info
+    streams: [scanning_api]
+    context_conditions:
+      zone: any
+      required_fields: [clientMac]
+      # assumed baseline (overridable): sales floor peak foot traffic yields
+      # tens of visible devices per POST; 40 distinct unassociated MACs in
+      # 60 s is well above the observed baseline of the parametric sim.
+      distinct_macs: 40
+      window_s: 60.0
+    evidence_required: [distinct_mac_count, window_s]
+    action: >-
+      Recommend watching Air Marshal for a correlated new BSSID and treating
+      the count strictly as a lower bound while investigating.
+    known_blind_spots:
+      - "unassociated randomised MACs are dropped and never reach the API (CLAUDE.md §5) — the true probe volume is undercounted, possibly severely"
+      - "one physical device rotating MACs is indistinguishable from many devices"
+      - "the source cannot be placed inside or outside the store by RF"
+
+  - id: sensor_silent
+    title: Logical sensor absent from all rssiRecords
+    severity: warn
+    streams: [scanning_api]
+    context_conditions:
+      zone: any
+      required_fields: [apMac]
+      # 600 s > 3× the worst-case jittered POST interval of 180 s
+      # (config pipeline.post_interval_s: [60, 180], "not guaranteed") —
+      # below that, silence is expected delivery jitter, not an outage.
+      silent_window_s: 600.0
+    evidence_required: [apMac, last_seen_ms, silent_for_ms]
+    action: >-
+      Recommend checking the sensor's PoE budget and switch port
+      (802.3at, 12.95–25.5 W per CW9172I datasheet) and dispatching
+      maintenance; positioning coverage near this unit is degraded until
+      it returns.
+    known_blind_spots:
+      - "absence from rssiRecords is an inference — jittered 60–180 s POSTs and 2% record loss mean silence can be a delivery gap, not a failure"
+      - "cannot distinguish sensor failure from deliberate RF jamming of its channel"
+
+  - id: exit_without_checkout
+    title: Tracked cart exited without checkout presence
+    severity: warn
+    streams: [dlai_track]
+    context_conditions:
+      zone: exit_gate      # deployment knowledge — gate band, south wall
+                           # (dlai/interaction.py EXIT_Y_MAX)
+      required_fields: [subject_mac]
+      # pass-through escalation of dlai/policy.py rule
+      # `exit_without_checkout_presence`; thresholds live in that rule.
+      source_policy_rule: exit_without_checkout_presence
+    evidence_required: [exit_at, checkout_interactions]
+    action: >-
+      Recommend an attendant check at the exit gate; do not treat this as
+      theft — the absence of checkout presence may be a sensing gap, and the
+      exit position itself is inferred.
+    known_blind_spots:
+      - "checkout absence may be a coverage/sensing gap, not a missed payment"
+      - "position flicker near the gate can fabricate or suppress exit events — sustained evidence rules apply"
+
+  - id: neighbour_network_catalogued
+    title: Neighbour network observed and catalogued
+    severity: info
+    streams: [air_marshal]
+    context_conditions:
+      zone: any
+      required_fields: [bssid, ssid]
+      wired_macs_max: 0    # no wire evidence = neighbour in this building;
+                           # five neighbour networks share this floor and the
+                           # floor above (CLAUDE.md §5)
+    evidence_required: [ssid, bssid]
+    action: >-
+      No enforcement recommended; catalogue the BSSID as a neighbour and use
+      the catalogue to suppress future rogue false positives.
+    known_blind_spots:
+      - "RF cannot prove the network is a neighbour rather than a quiet off-wire attacker — only the absence of wire evidence is known"
+      - "inside/outside position cannot be established by RF"
