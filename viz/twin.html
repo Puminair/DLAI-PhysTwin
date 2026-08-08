@@ -170,6 +170,9 @@ fetch("scene.json").then(r=>r.json()).then(payload => {
     const o = document.createElement("option"); o.value=b; o.textContent=b+" GHz";
     sel.appendChild(o);
   }
+  // JS orders integer-like keys ("5","6") before "2.4" — force the
+  // positioning band as the default, not whatever sorts first
+  if(coverageData["2.4"]) sel.value = "2.4";
   sel.onchange = buildCoverage;
   buildCoverage();
 });
