@@ -1,0 +1,137 @@
+# Meraki-style RF profiles for the CW9172I fleet — grounded in THIS repo's
+# findings. Three profiles: sales_floor, back_of_house, perimeter.
+#
+# Provenance legend (CLAUDE.md §2/§10):
+#   verified            — primary document (datasheet, Cisco deployment guide)
+#   assumed             — engineering value, overridable, no primary source
+#   derived-from-repo   — computed by this repo's own physics (README table,
+#                         data/coverage_report.json, data/reallocation_proposal.json)
+#
+# The two facts that drive everything (CLAUDE.md §2):
+#   * The link that matters is the UPLINK (~16-17 dBm cart panel vs 24 dBm AP).
+#     Tx-power settings below shape the DOWNLINK only — they exist to stabilise
+#     the cell plan and Air Marshal behaviour, never to "fix" location.
+#   * 2.4 GHz wins for positioning, decisively. README coverage table (2 m
+#     grid, panel z = 1.00 m): 2.4 GHz sales 99.5 % >=3 AP / BOH 95.4 %,
+#     vs 5 GHz sales 99.5 % / BOH 66.9 % and 6 GHz sales 99.3 % / BOH 66.0 %.
+#     A gondola costs 17.7 dB at 2.4 vs 36.7 dB at 6 (attenuation_db,
+#     config/defaults.yaml, ITU-R P.2040-3).
+
+meta:
+  model: CW9172I                       # verified — datasheet (config sensors.model)
+  location_threshold_dbm: -67          # verified — Cisco Location Deployment
+                                       # Guidelines (config rules.location_threshold_dbm)
+  rrm_problem: >                       # derived-from-repo — config sensors.rrm:
+    Default RRM moves Tx power 2-26 dBm every 30 min (sensors.rrm.tx_power_range_dbm,
+    interval_s: 1800). A 24 dB swing re-shapes every cell twice an hour; the
+    bounds below clamp it so the downlink cell plan (and Air Marshal
+    coverage) stops breathing. Location is unaffected either way — it is
+    computed from UPLINK frames (CLAUDE.md §2).
+
+profiles:
+
+  sales_floor:
+    applies_to_zone: sales_floor       # 104 logical positions (config sensors.sales_units)
+    location:
+      rtls_band: "2.4"                 # derived-from-repo — README table: 99.5 %
+                                       # >=3 AP at 2.4 GHz; gondola loss 17.7 dB
+                                       # vs 33.4/36.7 at 5/6 GHz makes 2.4 the
+                                       # only band that survives aisle crossings.
+      channel_width_mhz_24: 20         # verified — Cisco best practice: 20 MHz
+                                       # only at 2.4 GHz (three non-overlapping
+                                       # channels 1/6/11; wider widths self-interfere).
+      channels_24: [1, 6, 11]          # verified — only non-overlapping 2.4 GHz set
+    tx_power:
+      min_dbm: 11                      # assumed — tightened TPC floor; keeps the
+      max_dbm: 17                      # assumed — ceiling near the cart panel's
+                                       # own 17 dBm EIRP (config cart_uplink) so
+                                       # downlink cells stay symmetric-ish with
+                                       # the uplink they must not be mistaken for.
+                                       # Replaces the default 2-26 dBm RRM swing
+                                       # (config sensors.rrm.tx_power_range_dbm).
+    min_bitrate_mbps_24: 12            # assumed — Cisco HD-deployment practice:
+                                       # prune 1/2/5.5/6/9 Mb/s to shrink cell
+                                       # edge, cut management-frame airtime, and
+                                       # keep probe floods off the scanning radio.
+    band_steering:
+      client_serving: prefer_5ghz      # assumed — steer STAFF/ops clients (phones,
+                                       # POS) to 5 GHz so the 2.4 GHz air stays
+                                       # quiet for cart-panel RTLS uplink frames.
+      scanning_radio: dedicated        # verified — CW9172I has a dedicated
+                                       # scanning radio; never time-slice a
+                                       # serving radio for scans during trading.
+    containment:
+      air_marshal_auto_containment: "off_during_trading_hours"
+      # derived-from-repo — CLAUDE.md §5 gap table: "Air Marshal containment
+      # active -> scanning radio time-splits, RTLS accuracy degrades". DLAI is
+      # RECOMMEND_ONLY (CLAUDE.md §6); containment stays a human decision.
+
+  back_of_house:
+    applies_to_zone: back_of_house     # 28 logical positions (config sensors.boh_units)
+                                       # + 8 reallocated per
+                                       # data/reallocation_proposal.json
+                                       # (derived-from-repo: >=3 AP 66.9 -> 74.8 %,
+                                       # blind 17.2 -> 6.1 % at 5 GHz)
+    location:
+      rtls_band: "2.4"                 # derived-from-repo — README table: BOH is
+                                       # 95.4 % >=3 AP at 2.4 GHz vs 66.9 % at 5.
+                                       # BOH racking costs the same 17.7/33.4/36.7 dB
+                                       # per crossing (config attenuation_db.racking).
+      channel_width_mhz_24: 20         # verified — same non-overlap argument
+      channels_24: [1, 6, 11]          # verified
+    tx_power:
+      min_dbm: 14                      # assumed — 3 dB above sales floor: density
+      max_dbm: 17                      # is half (28+8 units / 2,218 m² vs
+                                       # 104 / 2,782 m²), so downlink cells must
+                                       # reach farther; ceiling still clamped vs
+                                       # the 26 dBm RRM default.
+    min_bitrate_mbps_24: 6             # assumed — one step lower than sales floor:
+                                       # sparse field, metal racking; dropping to
+                                       # 6 Mb/s keeps distant handhelds attached
+                                       # without re-opening the 1-2 Mb/s floods.
+    band_steering:
+      client_serving: prefer_5ghz      # assumed — warehouse scanners/handhelds off
+                                       # the RTLS band, same rationale as sales.
+      scanning_radio: dedicated        # verified — CW9172I dedicated scanning radio
+    containment:
+      air_marshal_auto_containment: "off_during_trading_hours"
+      # derived-from-repo — same §5 gap-table citation; BOH is where RTLS is
+      # already marginal, so containment time-splitting hurts most here.
+
+  perimeter:
+    applies_to_zone: perimeter         # 18 - 8 = 10 units after reallocation
+                                       # (data/reallocation_proposal.json donors)
+    role_note: >                       # derived-from-repo — CLAUDE.md §9: inside/
+      outside discrimination DOES NOT WORK (a modem 8 m out is heard by 41
+      sensors at -44 dBm). Remaining perimeter units are Air Marshal /
+      neighbour-survey listeners, not an RTLS fence. Do not build features
+      that assume they separate inside from outside.
+    location:
+      rtls_band: "2.4"                 # derived-from-repo — they still contribute
+                                       # uplink RSSI records to edge cells; keep
+                                       # them coherent with the RTLS band plan.
+      channel_width_mhz_24: 20         # verified
+      channels_24: [1, 6, 11]          # verified
+    tx_power:
+      min_dbm: 8                       # assumed — LOWER floor than interior: less
+      max_dbm: 14                      # power leaking into the courtyard reduces
+                                       # the five neighbour networks' pollution of
+                                       # Air Marshal (CLAUDE.md §5 wiredMacs note)
+                                       # and keeps outdoor clients from associating.
+                                       # Still clamped far below the 26 dBm default.
+    min_bitrate_mbps_24: 12            # assumed — discourage marginal outdoor
+                                       # clients from joining at the cell edge.
+    band_steering:
+      client_serving: prefer_5ghz      # assumed — 5/6 GHz decays faster through
+                                       # the facade; what leaks outside matters
+                                       # less on the high bands.
+      scanning_radio: dedicated        # verified — this is the perimeter units'
+                                       # real job post-reallocation: Air Marshal
+                                       # BSSID survey with wiredMacs/wiredVlans
+                                       # discrimination (CLAUDE.md §5).
+    containment:
+      air_marshal_auto_containment: "off_during_trading_hours"
+      # derived-from-repo — §5 gap table. Also: with five neighbour networks on
+      # this floor and above (CLAUDE.md §5), auto-containment without wiredMacs
+      # confirmation risks containing a neighbour's AP — a legal problem, not
+      # just an RF one. RECOMMEND_ONLY end to end.

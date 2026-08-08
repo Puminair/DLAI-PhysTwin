@@ -1,0 +1,103 @@
+{
+  "provenance": {
+    "generator": "scripts/propose_reallocation.py",
+    "method": "greedy reach heuristic (12 m, no cold_room, <=1 racking) for placement; effect PROVED by full eval.coverage.coverage_grid re-run on the modified sensor list \u2014 before/after below are those re-runs",
+    "band": "5",
+    "cell_m": 2.0,
+    "reach_m": 12.0,
+    "baseline_dataset": "data/sensing_layer2.json (1.0-parametric)"
+  },
+  "k": 8,
+  "donors": [
+    "S000",
+    "S001",
+    "S002",
+    "S013",
+    "S014",
+    "S015",
+    "S016",
+    "S017"
+  ],
+  "new_positions": [
+    {
+      "sensor_id": "S150",
+      "x": 89.0,
+      "y": 45.0,
+      "z": 3.0,
+      "zone": "back_of_house"
+    },
+    {
+      "sensor_id": "S151",
+      "x": 89.0,
+      "y": 27.0,
+      "z": 3.0,
+      "zone": "back_of_house"
+    },
+    {
+      "sensor_id": "S152",
+      "x": 83.0,
+      "y": 25.0,
+      "z": 3.0,
+      "zone": "back_of_house"
+    },
+    {
+      "sensor_id": "S153",
+      "x": 87.0,
+      "y": 27.0,
+      "z": 3.0,
+      "zone": "back_of_house"
+    },
+    {
+      "sensor_id": "S154",
+      "x": 83.0,
+      "y": 43.0,
+      "z": 3.0,
+      "zone": "back_of_house"
+    },
+    {
+      "sensor_id": "S155",
+      "x": 99.0,
+      "y": 43.0,
+      "z": 3.0,
+      "zone": "back_of_house"
+    },
+    {
+      "sensor_id": "S156",
+      "x": 99.0,
+      "y": 39.0,
+      "z": 3.0,
+      "zone": "back_of_house"
+    },
+    {
+      "sensor_id": "S157",
+      "x": 83.0,
+      "y": 45.0,
+      "z": 3.0,
+      "zone": "back_of_house"
+    }
+  ],
+  "before": {
+    "sales_floor": {
+      "cells": 564,
+      "ge3ap_pct": 99.5,
+      "blind_pct": 0.5
+    },
+    "back_of_house": {
+      "cells": 326,
+      "ge3ap_pct": 66.9,
+      "blind_pct": 17.2
+    }
+  },
+  "after": {
+    "sales_floor": {
+      "cells": 564,
+      "ge3ap_pct": 99.3,
+      "blind_pct": 0.5
+    },
+    "back_of_house": {
+      "cells": 326,
+      "ge3ap_pct": 74.8,
+      "blind_pct": 6.1
+    }
+  }
+}
