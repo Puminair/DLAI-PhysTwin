@@ -1,39 +1,13 @@
 {
  "provenance": {
   "generator": "scripts/generate_data.py",
-  "dataset_version": "1.0-parametric",
+  "dataset_version": "1.0-parametric+v0.3-reallocated",
   "seed": 20140457,
-  "note": "perimeter 18 + sales 104 + BOH 28 = 150 logical positions; BOH under-provisioned by design of v0.2 quotas"
+  "note": "applied data/reallocation_proposal.json (k=8): removed perimeter ['S000', 'S001', 'S002', 'S013', 'S014', 'S015', 'S016', 'S017'], added BOH ['S150', 'S151', 'S152', 'S153', 'S154', 'S155', 'S156', 'S157']; proven at 5 GHz BOH >=3AP 66.9->74.8 pct",
+  "applied_by": "scripts/apply_reallocation.py"
  },
  "mount_z_m": 3.0,
  "sensors": [
-  {
-   "sensor_id": "S000",
-   "x": 8.95,
-   "y": 0.55,
-   "z": 3.0,
-   "zone": "perimeter",
-   "model": "CW9172I",
-   "units": 2
-  },
-  {
-   "sensor_id": "S001",
-   "x": 25.03,
-   "y": 0.73,
-   "z": 3.0,
-   "zone": "perimeter",
-   "model": "CW9172I",
-   "units": 2
-  },
-  {
-   "sensor_id": "S002",
-   "x": 40.9,
-   "y": 0.95,
-   "z": 3.0,
-   "zone": "perimeter",
-   "model": "CW9172I",
-   "units": 2
-  },
   {
    "sensor_id": "S003",
    "x": 56.57,
@@ -119,51 +93,6 @@
    "sensor_id": "S012",
    "x": 34.77,
    "y": 54.13,
-   "z": 3.0,
-   "zone": "perimeter",
-   "model": "CW9172I",
-   "units": 2
-  },
-  {
-   "sensor_id": "S013",
-   "x": 18.8,
-   "y": 54.35,
-   "z": 3.0,
-   "zone": "perimeter",
-   "model": "CW9172I",
-   "units": 2
-  },
-  {
-   "sensor_id": "S014",
-   "x": 2.68,
-   "y": 54.5,
-   "z": 3.0,
-   "zone": "perimeter",
-   "model": "CW9172I",
-   "units": 2
-  },
-  {
-   "sensor_id": "S015",
-   "x": 0.97,
-   "y": 40.33,
-   "z": 3.0,
-   "zone": "perimeter",
-   "model": "CW9172I",
-   "units": 2
-  },
-  {
-   "sensor_id": "S016",
-   "x": 1.0,
-   "y": 24.41,
-   "z": 3.0,
-   "zone": "perimeter",
-   "model": "CW9172I",
-   "units": 2
-  },
-  {
-   "sensor_id": "S017",
-   "x": 0.93,
-   "y": 8.48,
    "z": 3.0,
    "zone": "perimeter",
    "model": "CW9172I",
@@ -1352,6 +1281,78 @@
    "sensor_id": "S149",
    "x": 79.24,
    "y": 48.75,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S150",
+   "x": 89.0,
+   "y": 45.0,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S151",
+   "x": 89.0,
+   "y": 27.0,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S152",
+   "x": 83.0,
+   "y": 25.0,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S153",
+   "x": 87.0,
+   "y": 27.0,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S154",
+   "x": 83.0,
+   "y": 43.0,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S155",
+   "x": 99.0,
+   "y": 43.0,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S156",
+   "x": 99.0,
+   "y": 39.0,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S157",
+   "x": 83.0,
+   "y": 45.0,
    "z": 3.0,
    "zone": "back_of_house",
    "model": "CW9172I",

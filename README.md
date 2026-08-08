@@ -50,11 +50,14 @@ parametric layout.
 
 ## What the model shows (this dataset, 2 m grid, cart-panel height 1.00 m)
 
+Current layout (v0.3 — the 8-unit perimeter→BOH reallocation is EXECUTED,
+see `scripts/apply_reallocation.py`; v0.2 baseline in parentheses):
+
 | band | sales ≥3 AP | sales blind | BOH ≥3 AP | BOH blind |
 |---|---|---|---|---|
-| 2.4 | 99.5 % | 0.5 % | 95.4 % | 3.7 % |
-| 5 | 99.5 % | 0.5 % | 66.9 % | 17.2 % |
-| 6 | 99.3 % | 0.5 % | 66.0 % | 17.8 % |
+| 2.4 | 99.5 % | 0.5 % | 96.3 % (95.4) | 3.7 % (3.7) |
+| 5 | 99.3 % (99.5) | 0.5 % | 74.8 % (66.9) | 6.1 % (17.2) |
+| 6 | 99.1 % (99.3) | 0.5 % | 73.3 % (66.0) | 6.1 % (17.8) |
 
 Two spec findings reproduce cleanly: **2.4 GHz wins decisively** wherever
 gondola crossings dominate, and **back of house collapses at 5/6 GHz** (28
