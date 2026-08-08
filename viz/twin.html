@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Centro Rehovot — Live 3D Digital Twin</title>
+<style>
+  html,body{margin:0;height:100%;background:#0b0e13;color:#cfd6e1;
+    font:12px/1.4 system-ui,sans-serif;overflow:hidden}
+  #hud{position:fixed;top:10px;left:10px;background:rgba(10,14,20,.85);
+    border:1px solid #263042;border-radius:8px;padding:10px 12px;z-index:2;
+    max-width:230px}
+  #hud h1{font-size:13px;margin:0 0 6px;color:#e8eef7}
+  #hud label{display:block;cursor:pointer;user-select:none;margin:2px 0}
+  #hud .stat{color:#8fa1b8;margin-top:6px;border-top:1px solid #263042;padding-top:6px}
+  #hud select{background:#141a24;color:#cfd6e1;border:1px solid #263042;
+    border-radius:4px;margin-left:4px}
+  .red{color:#ff5252}.ok{color:#69d16e}
+  #legend{position:fixed;bottom:10px;left:10px;color:#8fa1b8;z-index:2;
+    background:rgba(10,14,20,.85);border:1px solid #263042;border-radius:8px;
+    padding:8px 12px}
+</style>
+</head>
+<body>
+<div id="hud">
+  <h1>Centro Rehovot — digital twin</h1>
+  <label><input type="checkbox" id="t_shell" checked> shell</label>
+  <label><input type="checkbox" id="t_fixtures" checked> fixtures</label>
+  <label><input type="checkbox" id="t_hard" checked> hard occluders</label>
+  <label><input type="checkbox" id="t_checkout" checked> checkout</label>
+  <label><input type="checkbox" id="t_docks" checked> docks</label>
+  <label><input type="checkbox" id="t_sensors" checked> sensors</label>
+  <label><input type="checkbox" id="t_coverage" checked> coverage @ 1.00 m</label>
+  <label><input type="checkbox" id="t_blind"> blind-only (&lt;3 AP)</label>
+  <label><input type="checkbox" id="t_links" checked> links</label>
+  <label><input type="checkbox" id="t_plan"> plan view</label>
+  <label>coverage band <select id="bandSel"></select></label>
+  <div class="stat" id="stats">connecting…</div>
+</div>
+<div id="legend">coverage: <span class="ok">■</span> ≥3 AP · <span style="color:#e8b93e">■</span> 1–2 ·
+  <span class="red">■</span> 0 — rendered at cart-panel height, 1.00 m.<br>
+  a cart drawn <span class="red">red</span> is heard by &lt;3 sensors: a positioning
+  failure, not a coverage one.</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+"use strict";
+// three.js r128: no OrbitControls in the core build — minimal controls below.
+// No CapsuleGeometry (r142+): carts and shoppers are cylinders.
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0b0e13);
+const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 2000);
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+addEventListener("resize", () => {
+  camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+// store frame is Z-up; wrap everything in a Z-up -> Y-up group
+const world = new THREE.Group();
+world.rotation.x = -Math.PI/2;
+scene.add(world);
+scene.add(new THREE.AmbientLight(0xffffff, 0.65));
+const sun = new THREE.DirectionalLight(0xffffff, 0.6);
+sun.position.set(60, 120, 40); scene.add(sun);
+
+// ---- minimal orbit controls (drag rotate, wheel zoom, shift/right pan)
+const target = new THREE.Vector3(50, 0, -27.5);   // centre of store, y-up frame
+let sph = {r: 95, theta: -0.9, phi: 1.05};
+let planSaved = null;
+function applyCam(){
+  camera.position.set(
+    target.x + sph.r*Math.sin(sph.phi)*Math.cos(sph.theta),
+    target.y + sph.r*Math.cos(sph.phi),
+    target.z + sph.r*Math.sin(sph.phi)*Math.sin(sph.theta));
+  camera.lookAt(target);
+}
+applyCam();
+let drag = null;
+renderer.domElement.addEventListener("mousedown", e => {
+  drag = {x:e.clientX, y:e.clientY, pan:(e.button===2||e.shiftKey)};
+});
+addEventListener("mouseup", () => drag = null);
+addEventListener("mousemove", e => {
+  if(!drag) return;
+  const dx = e.clientX-drag.x, dy = e.clientY-drag.y;
+  drag.x = e.clientX; drag.y = e.clientY;
+  if(drag.pan){
+    const s = sph.r*0.0012;
+    const fwd = new THREE.Vector3().subVectors(target, camera.position).setY(0).normalize();
+    const right = new THREE.Vector3().crossVectors(fwd, new THREE.Vector3(0,1,0));
+    target.addScaledVector(right, dx*s).addScaledVector(fwd, dy*s);
+  } else {
+    sph.theta += dx*0.005;
+    sph.phi = Math.min(Math.PI/2-0.02, Math.max(0.05, sph.phi + dy*0.005));
+  }
+  applyCam();
+});
+renderer.domElement.addEventListener("wheel", e => {
+  sph.r = Math.min(400, Math.max(8, sph.r * (1 + Math.sign(e.deltaY)*0.08)));
+  applyCam();
+});
+renderer.domElement.addEventListener("contextmenu", e => e.preventDefault());
+
+// ---- layer groups
+const layers = {shell:new THREE.Group(), fixtures:new THREE.Group(),
+  hard:new THREE.Group(), checkout:new THREE.Group(), docks:new THREE.Group(),
+  sensors:new THREE.Group(), coverage:new THREE.Group(), links:new THREE.Group(),
+  agents:new THREE.Group()};
+Object.values(layers).forEach(g => world.add(g));
+
+const HARD = new Set(["cold_room","column","wall","room"]);
+const KINDCOL = {gondola:0x2f6b4f, endcap:0x2f6b4f, promo_pallet:0x3f7a45,
+  produce_table:0x4c8a3f, chiller:0x3d6f8e, racking:0x6e5a2e, column:0x596273,
+  cold_room:0x7d8aa0, wall:0x465064, room:0x465064, checkout:0x8a5fb0,
+  gate:0xb0685f, dock:0x8a8a5f, cart_dock:0xb0685f};
+
+function boxFromRing(ring, z0, z1, color, opacity){
+  const xs = ring.map(p=>p[0]), ys = ring.map(p=>p[1]);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs);
+  const y0 = Math.min(...ys), y1 = Math.max(...ys);
+  const geo = new THREE.BoxGeometry(x1-x0, y1-y0, z1-z0);
+  const mat = new THREE.MeshLambertMaterial({color, transparent:opacity<1, opacity});
+  const m = new THREE.Mesh(geo, mat);
+  m.position.set((x0+x1)/2, (y0+y1)/2, (z0+z1)/2);
+  return m;
+}
+
+let coverageData = null, panelZ = 1.0, minAps = 3;
+const carts = new Map(), shoppers = new Map(), sensorPos = new Map();
+
+fetch("scene.json").then(r=>r.json()).then(payload => {
+  const sc = payload.scene;
+  panelZ = payload.panel_z_m; minAps = payload.min_aps;
+  coverageData = payload.coverage;
+  // shell: envelope outline + translucent walls
+  const ring = sc.envelope.ring.concat([sc.envelope.ring[0]]);
+  const pts = ring.map(p => new THREE.Vector3(p[0], p[1], 0.05));
+  layers.shell.add(new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(pts),
+    new THREE.LineBasicMaterial({color:0x4a5a75})));
+  const ptsTop = ring.map(p => new THREE.Vector3(p[0], p[1], sc.envelope.ceiling_m));
+  layers.shell.add(new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints(ptsTop),
+    new THREE.LineBasicMaterial({color:0x2c3850})));
+  // floor
+  const floorShape = new THREE.Shape(ring.map(p => new THREE.Vector2(p[0], p[1])));
+  const floor = new THREE.Mesh(new THREE.ShapeGeometry(floorShape),
+    new THREE.MeshLambertMaterial({color:0x121820, side:THREE.DoubleSide}));
+  layers.shell.add(floor);
+
+  for(const s of sc.solids){
+    const kind = s.kind, col = KINDCOL[kind] ?? 0x556070;
+    const mesh = boxFromRing(s.ring, s.z0, s.z1, col, HARD.has(kind)?0.85:0.95);
+    if(HARD.has(kind)) layers.hard.add(mesh);
+    else if(kind === "checkout") layers.checkout.add(mesh);
+    else if(kind === "dock" || kind === "cart_dock" || kind === "gate") layers.docks.add(mesh);
+    else layers.fixtures.add(mesh);
+  }
+  const sGeo = new THREE.SphereGeometry(0.35, 10, 8);
+  const sMat = new THREE.MeshLambertMaterial({color:0x53b7e8});
+  for(const s of sc.sensors){
+    const m = new THREE.Mesh(sGeo, sMat);
+    m.position.set(s.x, s.y, s.z);
+    layers.sensors.add(m);
+    sensorPos.set(s.sensor_id, [s.x, s.y, s.z]);
+  }
+  const sel = document.getElementById("bandSel");
+  for(const b of Object.keys(coverageData)){
+    const o = document.createElement("option"); o.value=b; o.textContent=b+" GHz";
+    sel.appendChild(o);
+  }
+  sel.onchange = buildCoverage;
+  buildCoverage();
+});
+
+function buildCoverage(){
+  layers.coverage.clear();
+  const band = document.getElementById("bandSel").value;
+  const blindOnly = document.getElementById("t_blind").checked;
+  const cov = coverageData?.[band]; if(!cov) return;
+  const pos = [], colr = [];
+  for(const c of cov.cells){
+    if(blindOnly && c.n_aps >= minAps) continue;
+    pos.push(c.x, c.y, panelZ);     // the plane where the question is decided
+    const col = c.n_aps >= minAps ? [0.18,0.72,0.3]
+             : c.n_aps > 0 ? [0.91,0.73,0.24] : [1,0.2,0.2];
+    colr.push(...col);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute("color", new THREE.Float32BufferAttribute(colr, 3));
+  layers.coverage.add(new THREE.Points(g,
+    new THREE.PointsMaterial({size:1.4, vertexColors:true, transparent:true, opacity:0.8})));
+}
+document.getElementById("t_blind").addEventListener("change", buildCoverage);
+
+// ---- toggles
+const map = {t_shell:"shell", t_fixtures:"fixtures", t_hard:"hard",
+  t_checkout:"checkout", t_docks:"docks", t_sensors:"sensors",
+  t_coverage:"coverage", t_links:"links"};
+for(const [id, layer] of Object.entries(map)){
+  document.getElementById(id).addEventListener("change",
+    e => layers[layer].visible = e.target.checked);
+}
+document.getElementById("t_plan").addEventListener("change", e => {
+  if(e.target.checked){ planSaved = {...sph}; sph = {r:80, theta:-Math.PI/2, phi:0.06}; }
+  else if(planSaved){ sph = planSaved; }
+  applyCam();
+});
+
+// ---- live state over websocket
+const cartGeo = new THREE.CylinderGeometry(0.35, 0.35, 1.0, 10);
+const shopGeo = new THREE.CylinderGeometry(0.22, 0.22, 1.7, 8);
+const okMat = new THREE.MeshLambertMaterial({color:0x3fa0e0});
+const redMat = new THREE.MeshLambertMaterial({color:0xff4040});
+const shopMat = new THREE.MeshLambertMaterial({color:0x9aa5b5});
+function rssiColor(r){   // -45 strong (green) .. -67 weak (red)
+  const t = Math.max(0, Math.min(1, (r + 67) / 22));
+  return new THREE.Color().setHSL(0.33*t, 0.9, 0.5);
+}
+
+function connect(){
+  const ws = new WebSocket((location.protocol==="https:"?"wss://":"ws://")+location.host+"/ws");
+  ws.onmessage = ev => {
+    const st = JSON.parse(ev.data);
+    const seen = new Set();
+    let red = 0, active = 0;
+    for(const c of st.carts){
+      if(c.state === "docked") { const m = carts.get(c.id); if(m) m.visible=false; continue; }
+      active++;
+      let m = carts.get(c.id);
+      if(!m){
+        m = new THREE.Mesh(cartGeo, okMat);
+        m.rotation.x = Math.PI/2;      // cylinder axis -> store z
+        layers.agents.add(m); carts.set(c.id, m);
+      }
+      m.visible = true;
+      m.position.set(c.x, c.y, 0.5);
+      const ln = st.links[c.id] || [];
+      m.material = ln.length < minAps ? redMat : okMat;
+      if(ln.length < minAps) red++;
+      seen.add(c.id);
+    }
+    const sSeen = new Set();
+    for(const s of st.shoppers){
+      let m = shoppers.get(s.id);
+      if(!m){
+        m = new THREE.Mesh(shopGeo, shopMat);
+        m.rotation.x = Math.PI/2;
+        layers.agents.add(m); shoppers.set(s.id, m);
+      }
+      m.position.set(s.x, s.y, 0.85);
+      sSeen.add(s.id);
+    }
+    for(const [id, m] of shoppers) if(!sSeen.has(id)){ layers.agents.remove(m); shoppers.delete(id); }
+    // links: one segment cart -> each sensor hearing it, coloured by RSSI
+    layers.links.clear();
+    const lpos = [], lcol = [];
+    for(const c of st.carts){
+      const ln = st.links[c.id]; if(!ln || c.state === "docked") continue;
+      for(const l of ln){
+        const sp = sensorPos.get(l.sensor_id); if(!sp) continue;
+        const col = rssiColor(l.rssi);
+        lpos.push(c.x, c.y, panelZ, sp[0], sp[1], sp[2]);
+        lcol.push(col.r, col.g, col.b, col.r, col.g, col.b);
+      }
+    }
+    const lg = new THREE.BufferGeometry();
+    lg.setAttribute("position", new THREE.Float32BufferAttribute(lpos, 3));
+    lg.setAttribute("color", new THREE.Float32BufferAttribute(lcol, 3));
+    layers.links.add(new THREE.LineSegments(lg,
+      new THREE.LineBasicMaterial({vertexColors:true, transparent:true, opacity:0.65})));
+    document.getElementById("stats").innerHTML =
+      `carts active: ${active} · <span class="red">red (&lt;${minAps} AP): ${red}</span>` +
+      ` · shoppers: ${st.shoppers.length} · band ${st.band}`;
+  };
+  ws.onclose = () => setTimeout(connect, 1500);
+}
+connect();
+
+(function animate(){ requestAnimationFrame(animate); renderer.render(scene, camera); })();
+</script>
+</body>
+</html>

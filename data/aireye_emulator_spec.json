@@ -1,0 +1,41 @@
+{
+ "provenance": {
+  "generator": "scripts/generate_data.py",
+  "dataset_version": "1.0-parametric",
+  "seed": 20140457,
+  "note": "assumed: alert taxonomy coverage map"
+ },
+ "alert_taxonomy": [
+  {
+   "signature": "rogue_ap_on_wire",
+   "stream": "air_marshal",
+   "carries_client_identity": true,
+   "key_field": "wiredMacs"
+  },
+  {
+   "signature": "honeypot_ssid",
+   "stream": "air_marshal",
+   "carries_client_identity": false,
+   "key_field": "ssid"
+  },
+  {
+   "signature": "deauth_flood",
+   "stream": "awips_syslog",
+   "carries_client_identity": false,
+   "throttling": "one message per signature per AP per interval"
+  },
+  {
+   "signature": "beacon_spoof",
+   "stream": "awips_syslog",
+   "carries_client_identity": false,
+   "throttling": "one message per signature per AP per interval"
+  },
+  {
+   "signature": "containment_active",
+   "stream": "air_marshal",
+   "carries_client_identity": false,
+   "side_effect": "scanning radio time-splits; RTLS accuracy degrades"
+  }
+ ],
+ "neighbour_networks_same_floor_or_above": 5
+}

@@ -1,0 +1,47 @@
+{
+ "provenance": {
+  "generator": "scripts/generate_data.py",
+  "dataset_version": "1.0-parametric",
+  "seed": 20140457,
+  "note": "assumed: cart panel Tx power is a class value; no vendor figure exists (CLAUDE.md \u00a79)"
+ },
+ "cart_panel": {
+  "eirp_dbm": {
+   "2.4": 17.0,
+   "5": 16.0,
+   "6": 16.0
+  },
+  "antenna_z_m": 1.0,
+  "bands": [
+   "2.4",
+   "5"
+  ],
+  "mac_policy": "stable_per_device",
+  "beacon_interval_s": 3.0
+ },
+ "pos_terminal": {
+  "eirp_dbm": {
+   "2.4": 15.0,
+   "5": 14.0
+  },
+  "antenna_z_m": 0.9,
+  "mac_policy": "stable_per_device",
+  "wired": true
+ },
+ "gate_controller": {
+  "eirp_dbm": {
+   "2.4": 14.0
+  },
+  "antenna_z_m": 1.1,
+  "mac_policy": "stable_per_device",
+  "wired": true
+ },
+ "shopper_phone": {
+  "eirp_dbm": {
+   "2.4": 14.0,
+   "5": 13.0
+  },
+  "antenna_z_m": 1.1,
+  "mac_policy": "randomized_unassociated"
+ }
+}

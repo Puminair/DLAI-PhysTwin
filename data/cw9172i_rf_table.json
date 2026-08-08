@@ -1,0 +1,207 @@
+{
+ "provenance": {
+  "generator": "scripts/generate_data.py",
+  "dataset_version": "1.0-parametric",
+  "seed": 20140457,
+  "note": "assumed: datasheet-shaped table; verify against CW9172I primary PDF before relying on absolute values"
+ },
+ "antenna_gain_dbi": {
+  "2.4": 4.0,
+  "5": 5.0,
+  "6": 6.0
+ },
+ "mcs_table": [
+  {
+   "band": "2.4",
+   "mcs": 0,
+   "tx_dbm": 20.0,
+   "rx_sensitivity_dbm": -94.0
+  },
+  {
+   "band": "2.4",
+   "mcs": 1,
+   "tx_dbm": 20.0,
+   "rx_sensitivity_dbm": -91.0
+  },
+  {
+   "band": "2.4",
+   "mcs": 2,
+   "tx_dbm": 20.0,
+   "rx_sensitivity_dbm": -88.0
+  },
+  {
+   "band": "2.4",
+   "mcs": 3,
+   "tx_dbm": 20.0,
+   "rx_sensitivity_dbm": -85.0
+  },
+  {
+   "band": "2.4",
+   "mcs": 4,
+   "tx_dbm": 20.0,
+   "rx_sensitivity_dbm": -82.0
+  },
+  {
+   "band": "2.4",
+   "mcs": 5,
+   "tx_dbm": 19.5,
+   "rx_sensitivity_dbm": -79.0
+  },
+  {
+   "band": "2.4",
+   "mcs": 6,
+   "tx_dbm": 19.0,
+   "rx_sensitivity_dbm": -76.0
+  },
+  {
+   "band": "2.4",
+   "mcs": 7,
+   "tx_dbm": 18.5,
+   "rx_sensitivity_dbm": -73.0
+  },
+  {
+   "band": "5",
+   "mcs": 0,
+   "tx_dbm": 19.0,
+   "rx_sensitivity_dbm": -92.0
+  },
+  {
+   "band": "5",
+   "mcs": 1,
+   "tx_dbm": 19.0,
+   "rx_sensitivity_dbm": -89.0
+  },
+  {
+   "band": "5",
+   "mcs": 2,
+   "tx_dbm": 19.0,
+   "rx_sensitivity_dbm": -86.0
+  },
+  {
+   "band": "5",
+   "mcs": 3,
+   "tx_dbm": 19.0,
+   "rx_sensitivity_dbm": -83.0
+  },
+  {
+   "band": "5",
+   "mcs": 4,
+   "tx_dbm": 19.0,
+   "rx_sensitivity_dbm": -80.0
+  },
+  {
+   "band": "5",
+   "mcs": 5,
+   "tx_dbm": 18.5,
+   "rx_sensitivity_dbm": -77.0
+  },
+  {
+   "band": "5",
+   "mcs": 6,
+   "tx_dbm": 18.0,
+   "rx_sensitivity_dbm": -74.0
+  },
+  {
+   "band": "5",
+   "mcs": 7,
+   "tx_dbm": 17.5,
+   "rx_sensitivity_dbm": -71.0
+  },
+  {
+   "band": "5",
+   "mcs": 8,
+   "tx_dbm": 17.0,
+   "rx_sensitivity_dbm": -68.0
+  },
+  {
+   "band": "5",
+   "mcs": 9,
+   "tx_dbm": 16.5,
+   "rx_sensitivity_dbm": -65.0
+  },
+  {
+   "band": "5",
+   "mcs": 10,
+   "tx_dbm": 16.0,
+   "rx_sensitivity_dbm": -62.0
+  },
+  {
+   "band": "5",
+   "mcs": 11,
+   "tx_dbm": 15.5,
+   "rx_sensitivity_dbm": -59.0
+  },
+  {
+   "band": "6",
+   "mcs": 0,
+   "tx_dbm": 18.0,
+   "rx_sensitivity_dbm": -91.0
+  },
+  {
+   "band": "6",
+   "mcs": 1,
+   "tx_dbm": 18.0,
+   "rx_sensitivity_dbm": -88.0
+  },
+  {
+   "band": "6",
+   "mcs": 2,
+   "tx_dbm": 18.0,
+   "rx_sensitivity_dbm": -85.0
+  },
+  {
+   "band": "6",
+   "mcs": 3,
+   "tx_dbm": 18.0,
+   "rx_sensitivity_dbm": -82.0
+  },
+  {
+   "band": "6",
+   "mcs": 4,
+   "tx_dbm": 18.0,
+   "rx_sensitivity_dbm": -79.0
+  },
+  {
+   "band": "6",
+   "mcs": 5,
+   "tx_dbm": 17.5,
+   "rx_sensitivity_dbm": -76.0
+  },
+  {
+   "band": "6",
+   "mcs": 6,
+   "tx_dbm": 17.0,
+   "rx_sensitivity_dbm": -73.0
+  },
+  {
+   "band": "6",
+   "mcs": 7,
+   "tx_dbm": 16.5,
+   "rx_sensitivity_dbm": -70.0
+  },
+  {
+   "band": "6",
+   "mcs": 8,
+   "tx_dbm": 16.0,
+   "rx_sensitivity_dbm": -67.0
+  },
+  {
+   "band": "6",
+   "mcs": 9,
+   "tx_dbm": 15.5,
+   "rx_sensitivity_dbm": -64.0
+  },
+  {
+   "band": "6",
+   "mcs": 10,
+   "tx_dbm": 15.0,
+   "rx_sensitivity_dbm": -61.0
+  },
+  {
+   "band": "6",
+   "mcs": 11,
+   "tx_dbm": 14.5,
+   "rx_sensitivity_dbm": -58.0
+  }
+ ]
+}

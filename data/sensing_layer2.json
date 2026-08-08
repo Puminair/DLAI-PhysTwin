@@ -1,0 +1,1361 @@
+{
+ "provenance": {
+  "generator": "scripts/generate_data.py",
+  "dataset_version": "1.0-parametric",
+  "seed": 20140457,
+  "note": "perimeter 18 + sales 104 + BOH 28 = 150 logical positions; BOH under-provisioned by design of v0.2 quotas"
+ },
+ "mount_z_m": 3.0,
+ "sensors": [
+  {
+   "sensor_id": "S000",
+   "x": 8.95,
+   "y": 0.55,
+   "z": 3.0,
+   "zone": "perimeter",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S001",
+   "x": 25.03,
+   "y": 0.73,
+   "z": 3.0,
+   "zone": "perimeter",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S002",
+   "x": 40.9,
+   "y": 0.95,
+   "z": 3.0,
+   "zone": "perimeter",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S003",
+   "x": 56.57,
+   "y": 0.97,
+   "z": 3.0,
+   "zone": "perimeter",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S004",
+   "x": 70.34,
+   "y": 7.61,
+   "z": 3.0,
+   "zone": "perimeter",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S005",
+   "x": 83.88,
+   "y": 15.84,
+   "z": 3.0,
+   "zone": "perimeter",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S006",
+   "x": 97.59,
+   "y": 24.19,
+   "z": 3.0,
+   "zone": "perimeter",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S007",
+   "x": 99.03,
+   "y": 39.33,
+   "z": 3.0,
+   "zone": "perimeter",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S008",
+   "x": 98.33,
+   "y": 54.51,
+   "z": 3.0,
+   "zone": "perimeter",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S009",
+   "x": 82.2,
+   "y": 54.36,
+   "z": 3.0,
+   "zone": "perimeter",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S010",
+   "x": 66.22,
+   "y": 54.15,
+   "z": 3.0,
+   "zone": "perimeter",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S011",
+   "x": 50.49,
+   "y": 54.0,
+   "z": 3.0,
+   "zone": "perimeter",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S012",
+   "x": 34.77,
+   "y": 54.13,
+   "z": 3.0,
+   "zone": "perimeter",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S013",
+   "x": 18.8,
+   "y": 54.35,
+   "z": 3.0,
+   "zone": "perimeter",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S014",
+   "x": 2.68,
+   "y": 54.5,
+   "z": 3.0,
+   "zone": "perimeter",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S015",
+   "x": 0.97,
+   "y": 40.33,
+   "z": 3.0,
+   "zone": "perimeter",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S016",
+   "x": 1.0,
+   "y": 24.41,
+   "z": 3.0,
+   "zone": "perimeter",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S017",
+   "x": 0.93,
+   "y": 8.48,
+   "z": 3.0,
+   "zone": "perimeter",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S018",
+   "x": 4.38,
+   "y": 4.32,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S019",
+   "x": 9.14,
+   "y": 4.32,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S020",
+   "x": 13.89,
+   "y": 4.32,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S021",
+   "x": 18.65,
+   "y": 4.32,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S022",
+   "x": 23.41,
+   "y": 4.32,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S023",
+   "x": 28.17,
+   "y": 4.32,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S024",
+   "x": 32.93,
+   "y": 4.32,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S025",
+   "x": 37.68,
+   "y": 4.32,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S026",
+   "x": 42.44,
+   "y": 4.32,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S027",
+   "x": 47.2,
+   "y": 4.32,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S028",
+   "x": 4.38,
+   "y": 8.95,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S029",
+   "x": 9.14,
+   "y": 8.95,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S030",
+   "x": 13.89,
+   "y": 8.95,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S031",
+   "x": 18.65,
+   "y": 8.95,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S032",
+   "x": 23.41,
+   "y": 8.95,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S033",
+   "x": 28.17,
+   "y": 8.95,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S034",
+   "x": 32.93,
+   "y": 8.95,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S035",
+   "x": 37.68,
+   "y": 8.95,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S036",
+   "x": 42.44,
+   "y": 8.95,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S037",
+   "x": 47.2,
+   "y": 8.95,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S038",
+   "x": 4.38,
+   "y": 13.59,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S039",
+   "x": 9.14,
+   "y": 13.59,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S040",
+   "x": 13.89,
+   "y": 13.59,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S041",
+   "x": 18.65,
+   "y": 13.59,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S042",
+   "x": 23.41,
+   "y": 13.59,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S043",
+   "x": 28.17,
+   "y": 13.59,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S044",
+   "x": 32.93,
+   "y": 13.59,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S045",
+   "x": 37.68,
+   "y": 13.59,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S046",
+   "x": 42.44,
+   "y": 13.59,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S047",
+   "x": 47.2,
+   "y": 13.59,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S048",
+   "x": 4.38,
+   "y": 18.23,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S049",
+   "x": 9.14,
+   "y": 18.23,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S050",
+   "x": 13.89,
+   "y": 18.23,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S051",
+   "x": 18.65,
+   "y": 18.23,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S052",
+   "x": 23.41,
+   "y": 18.23,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S053",
+   "x": 28.17,
+   "y": 18.23,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S054",
+   "x": 32.93,
+   "y": 18.23,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S055",
+   "x": 37.68,
+   "y": 18.23,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S056",
+   "x": 42.44,
+   "y": 18.23,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S057",
+   "x": 47.2,
+   "y": 18.23,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S058",
+   "x": 4.38,
+   "y": 22.86,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S059",
+   "x": 9.14,
+   "y": 22.86,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S060",
+   "x": 13.89,
+   "y": 22.86,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S061",
+   "x": 18.65,
+   "y": 22.86,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S062",
+   "x": 23.41,
+   "y": 22.86,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S063",
+   "x": 28.17,
+   "y": 22.86,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S064",
+   "x": 32.93,
+   "y": 22.86,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S065",
+   "x": 37.68,
+   "y": 22.86,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S066",
+   "x": 42.44,
+   "y": 22.86,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S067",
+   "x": 47.2,
+   "y": 22.86,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S068",
+   "x": 4.38,
+   "y": 27.5,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S069",
+   "x": 9.14,
+   "y": 27.5,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S070",
+   "x": 13.89,
+   "y": 27.5,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S071",
+   "x": 18.65,
+   "y": 27.5,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S072",
+   "x": 23.41,
+   "y": 27.5,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S073",
+   "x": 28.17,
+   "y": 27.5,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S074",
+   "x": 32.93,
+   "y": 27.5,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S075",
+   "x": 37.68,
+   "y": 27.5,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S076",
+   "x": 42.44,
+   "y": 27.5,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S077",
+   "x": 47.2,
+   "y": 27.5,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S078",
+   "x": 4.38,
+   "y": 32.14,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S079",
+   "x": 9.14,
+   "y": 32.14,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S080",
+   "x": 13.89,
+   "y": 32.14,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S081",
+   "x": 18.65,
+   "y": 32.14,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S082",
+   "x": 23.41,
+   "y": 32.14,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S083",
+   "x": 28.17,
+   "y": 32.14,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S084",
+   "x": 32.93,
+   "y": 32.14,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S085",
+   "x": 37.68,
+   "y": 32.14,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S086",
+   "x": 42.44,
+   "y": 32.14,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S087",
+   "x": 47.2,
+   "y": 32.14,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S088",
+   "x": 4.38,
+   "y": 36.77,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S089",
+   "x": 9.14,
+   "y": 36.77,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S090",
+   "x": 13.89,
+   "y": 36.77,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S091",
+   "x": 18.65,
+   "y": 36.77,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S092",
+   "x": 23.41,
+   "y": 36.77,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S093",
+   "x": 28.17,
+   "y": 36.77,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S094",
+   "x": 32.93,
+   "y": 36.77,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S095",
+   "x": 37.68,
+   "y": 36.77,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S096",
+   "x": 42.44,
+   "y": 36.77,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S097",
+   "x": 47.2,
+   "y": 36.77,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S098",
+   "x": 4.38,
+   "y": 41.41,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S099",
+   "x": 9.14,
+   "y": 41.41,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S100",
+   "x": 13.89,
+   "y": 41.41,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S101",
+   "x": 18.65,
+   "y": 41.41,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S102",
+   "x": 23.41,
+   "y": 41.41,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S103",
+   "x": 28.17,
+   "y": 41.41,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S104",
+   "x": 32.93,
+   "y": 41.41,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S105",
+   "x": 37.68,
+   "y": 41.41,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S106",
+   "x": 42.44,
+   "y": 41.41,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S107",
+   "x": 47.2,
+   "y": 41.41,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S108",
+   "x": 4.38,
+   "y": 46.05,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S109",
+   "x": 9.14,
+   "y": 46.05,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S110",
+   "x": 13.89,
+   "y": 46.05,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S111",
+   "x": 18.65,
+   "y": 46.05,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S112",
+   "x": 23.41,
+   "y": 46.05,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S113",
+   "x": 28.17,
+   "y": 46.05,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S114",
+   "x": 32.93,
+   "y": 46.05,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S115",
+   "x": 37.68,
+   "y": 46.05,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S116",
+   "x": 42.44,
+   "y": 46.05,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S117",
+   "x": 47.2,
+   "y": 46.05,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S118",
+   "x": 4.38,
+   "y": 50.68,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S119",
+   "x": 9.14,
+   "y": 50.68,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S120",
+   "x": 13.89,
+   "y": 50.68,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S121",
+   "x": 18.65,
+   "y": 50.68,
+   "z": 3.0,
+   "zone": "sales_floor",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S122",
+   "x": 55.53,
+   "y": 6.25,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S123",
+   "x": 63.43,
+   "y": 6.25,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S124",
+   "x": 55.53,
+   "y": 14.75,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S125",
+   "x": 63.43,
+   "y": 14.75,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S126",
+   "x": 71.34,
+   "y": 14.75,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S127",
+   "x": 79.24,
+   "y": 14.75,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S128",
+   "x": 55.53,
+   "y": 23.25,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S129",
+   "x": 63.43,
+   "y": 23.25,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S130",
+   "x": 71.34,
+   "y": 23.25,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S131",
+   "x": 79.24,
+   "y": 23.25,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S132",
+   "x": 87.15,
+   "y": 23.25,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S133",
+   "x": 95.05,
+   "y": 23.25,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S134",
+   "x": 55.53,
+   "y": 31.75,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S135",
+   "x": 63.43,
+   "y": 31.75,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S136",
+   "x": 71.34,
+   "y": 31.75,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S137",
+   "x": 79.24,
+   "y": 31.75,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S138",
+   "x": 87.15,
+   "y": 31.75,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S139",
+   "x": 95.05,
+   "y": 31.75,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S140",
+   "x": 55.53,
+   "y": 40.25,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S141",
+   "x": 63.43,
+   "y": 40.25,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S142",
+   "x": 71.34,
+   "y": 40.25,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S143",
+   "x": 79.24,
+   "y": 40.25,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S144",
+   "x": 87.15,
+   "y": 40.25,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S145",
+   "x": 95.05,
+   "y": 40.25,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S146",
+   "x": 55.53,
+   "y": 48.75,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S147",
+   "x": 63.43,
+   "y": 48.75,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S148",
+   "x": 71.34,
+   "y": 48.75,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2
+  },
+  {
+   "sensor_id": "S149",
+   "x": 79.24,
+   "y": 48.75,
+   "z": 3.0,
+   "zone": "back_of_house",
+   "model": "CW9172I",
+   "units": 2
+  }
+ ]
+}

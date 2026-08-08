@@ -1,0 +1,39 @@
+{
+ "provenance": {
+  "generator": "scripts/generate_data.py",
+  "dataset_version": "1.0-parametric",
+  "seed": 20140457,
+  "note": "ITU-R P.2040-3 equivalent-thickness computation; gondola value is the most sensitive parameter in the model \u2014 first thing to measure (CLAUDE.md \u00a79)"
+ },
+ "attenuation_db": {
+  "2.4": {
+   "gondola": 17.7,
+   "chiller": 17.7,
+   "column": 46.4,
+   "cold_room": null,
+   "racking": 17.7,
+   "wall": 10.0
+  },
+  "5": {
+   "gondola": 33.4,
+   "chiller": 33.4,
+   "column": 87.7,
+   "cold_room": null,
+   "racking": 33.4,
+   "wall": 14.0
+  },
+  "6": {
+   "gondola": 36.7,
+   "chiller": 36.7,
+   "column": 96.3,
+   "cold_room": null,
+   "racking": 36.7,
+   "wall": 15.0
+  },
+  "human_body": {
+   "2.4": 5.0,
+   "5": 8.0,
+   "6": 8.0
+  }
+ }
+}

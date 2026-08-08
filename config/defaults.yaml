@@ -1,0 +1,83 @@
+# Yochananof Centro Rehovot — locked constants (CLAUDE.md §2).
+# provenance: verified = primary document; assumed = engineering value,
+# overridable at runtime via config.load_config(overrides=...).
+# Never inline an `assumed` value in a formula — read it from here.
+
+envelope:                    # verified — lease + building permit 20140457
+  ring: [[0.0, 0.0], [60.0, 0.0], [100.0, 25.0], [100.0, 55.0], [0.0, 55.0]]
+  area_m2: 5000
+  slab_height_m: 6.70
+  ceiling_m: 6.40
+  floor_level_m: -6.70
+
+areas:
+  sales_floor_m2: 2782       # verified — Yochananof periodic report
+  back_of_house_m2: 2218     # derived
+  warehouse_m2: 1747         # derived
+  x_split_m: 50.58           # derived — solves to sales area
+
+geometry:                    # assumed — parametric fit-out, not a survey
+  aisles: 10
+  aisle_y_start_m: 5.40
+  aisle_y_end_m: 48.60
+  aisle_pitch_m: 4.80
+  aisle_run_m: 34.6
+  aisle_x_start_m: 8.0       # derived — leaves front runway for checkouts
+  gondola_depth_m: 1.20
+  gondola_height_m: 2.00
+  gondola_bay_m: 1.80        # derived — bay segmentation of a run
+  column_grid_m: 8.0
+  columns: 77
+  column_size_m: 0.40
+
+sensors:
+  logical: 150
+  units_per_logical: 2       # pair -> +2.5 dB selection diversity
+  diversity_gain_db: 2.5     # assumed
+  model: CW9172I             # verified datasheet
+  mount_z_m: 3.00
+  pendant_drop_m: 3.40
+  antenna_gain_dbi: {"2.4": 4.0, "5": 5.0, "6": 6.0}
+  poe: {min_w: 12.95, typical_w: 12.2, max_w: 25.5, class: 802.3at}
+  perimeter_units: 18        # derived — v0.2 quota
+  sales_units: 104           # derived — 150 - 18 perimeter - 28 BOH
+  boh_units: 28              # derived — v0.2 quota (under-provisioned by design)
+  ap_eirp_dbm: {"2.4": 24.0, "5": 24.0, "6": 24.0}   # assumed — downlink, DO NOT use for location
+  rrm:                       # assumed — RRM moves Tx power every 30 min
+    interval_s: 1800
+    tx_power_range_dbm: [2.0, 26.0]
+
+heights:
+  cart_panel_z_m: 1.00       # the plane that decides everything
+  shopper_eye_z_m: 1.60
+  shopper_shoulder_half_width_m: 0.28
+  gondola_top_z_m: 2.00      # 1.0 m below the sensors — this is the whole problem
+
+attenuation_db:              # ITU-R P.2040-3, per crossing; null = opaque (conductor)
+  "2.4": {gondola: 17.7, chiller: 17.7, column: 46.4, cold_room: null, racking: 17.7, wall: 10.0}
+  "5":   {gondola: 33.4, chiller: 33.4, column: 87.7, cold_room: null, racking: 33.4, wall: 14.0}
+  "6":   {gondola: 36.7, chiller: 36.7, column: 96.3, cold_room: null, racking: 36.7, wall: 15.0}
+  human_body: {"2.4": 5.0, "5": 8.0, "6": 8.0}   # assumed, per body crossed; 6 GHz mirrors 5
+
+rules:
+  location_threshold_dbm: -67   # Cisco Location Deployment Guidelines
+  min_aps_for_position: 3
+  mount_height_range_m: [2.5, 3.5]
+
+cart_uplink:                 # assumed — no vendor RF figures published (class value)
+  eirp_dbm: {"2.4": 17.0, "5": 16.0, "6": 16.0}
+
+motion:                      # assumed
+  cart_speed_ms: [0.5, 1.2]
+  shopper_speed_ms: [0.6, 1.4]
+  gondola_dwell_s: [10.0, 90.0]
+  checkout_service_s: [45.0, 180.0]
+
+pipeline:                    # assumed — Scanning API v3 behaviour
+  post_interval_s: [60.0, 180.0]   # jittered, not guaranteed
+  record_loss_prob: 0.02
+  randomized_mac_prob: 0.6         # share of shopper phones with MAC randomisation
+
+reflections:                 # assumed — first-order image method
+  fresnel_loss_db_normal: 3.0      # steel gondola back at normal incidence
+  enabled_bands: ["5", "6"]        # measured effect zero at 2.4 — skip there
