@@ -32,6 +32,7 @@
   <label><input type="checkbox" id="t_coverage" checked> coverage @ 1.00 m</label>
   <label><input type="checkbox" id="t_blind"> blind-only (&lt;3 AP)</label>
   <label><input type="checkbox" id="t_links" checked> links</label>
+  <label><input type="checkbox" id="t_labels" checked> labels</label>
   <label><input type="checkbox" id="t_plan"> plan view</label>
   <label>coverage band <select id="bandSel"></select></label>
   <div class="stat" id="stats">connecting…</div>
@@ -64,9 +65,12 @@ addEventListener("resize", () => {
 const world = new THREE.Group();
 world.rotation.x = -Math.PI/2;
 scene.add(world);
-scene.add(new THREE.AmbientLight(0xffffff, 0.65));
-const sun = new THREE.DirectionalLight(0xffffff, 0.6);
+scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+scene.add(new THREE.HemisphereLight(0x9db4d6, 0x1c2430, 0.55));
+const sun = new THREE.DirectionalLight(0xffffff, 0.55);
 sun.position.set(60, 120, 40); scene.add(sun);
+const fill = new THREE.DirectionalLight(0x88a0c0, 0.25);
+fill.position.set(-40, 80, -60); scene.add(fill);
 
 // ---- minimal orbit controls (drag rotate, wheel zoom, shift/right pan)
 const target = new THREE.Vector3(50, 0, -27.5);   // centre of store, y-up frame
@@ -110,8 +114,42 @@ renderer.domElement.addEventListener("contextmenu", e => e.preventDefault());
 const layers = {shell:new THREE.Group(), fixtures:new THREE.Group(),
   hard:new THREE.Group(), checkout:new THREE.Group(), docks:new THREE.Group(),
   sensors:new THREE.Group(), coverage:new THREE.Group(), links:new THREE.Group(),
-  agents:new THREE.Group()};
+  agents:new THREE.Group(), labels:new THREE.Group()};
 Object.values(layers).forEach(g => world.add(g));
+
+// billboard text labels for zones and points of interest
+function makeLabel(text, opts = {}){
+  const size = opts.size ?? 44, pad = 18;
+  const cv = document.createElement("canvas");
+  const ctx = cv.getContext("2d");
+  ctx.font = `700 ${size}px system-ui, sans-serif`;
+  cv.width = Math.ceil(ctx.measureText(text).width) + pad*2;
+  cv.height = size + pad*2;
+  const c2 = cv.getContext("2d");
+  c2.font = `700 ${size}px system-ui, sans-serif`;
+  c2.fillStyle = "rgba(8,12,18,0.55)";
+  c2.beginPath(); c2.roundRect(0, 0, cv.width, cv.height, 12); c2.fill();
+  c2.fillStyle = opts.color ?? "#dfe8f5";
+  c2.textBaseline = "middle";
+  c2.fillText(text, pad, cv.height/2 + 2);
+  const tex = new THREE.CanvasTexture(cv);
+  const spr = new THREE.Sprite(new THREE.SpriteMaterial({map:tex, transparent:true,
+    depthWrite:false}));
+  const scale = opts.scale ?? 0.045;
+  spr.scale.set(cv.width*scale, cv.height*scale, 1);
+  spr.position.set(opts.x, opts.y, opts.z ?? 4.5);
+  return spr;
+}
+[
+  {t:"SALES FLOOR",  x:25, y:27, z:5.6, color:"#9fd6a8"},
+  {t:"BACK OF HOUSE",x:61, y:20, z:5.6, color:"#c9d2e0"},
+  {t:"WAREHOUSE",    x:84, y:32, z:6.0, color:"#e0c98f"},
+  {t:"COLD ROOMS",   x:61, y:41, z:4.6, color:"#aebfd8", size:34},
+  {t:"CHECKOUTS",    x:5,  y:47, z:3.6, color:"#d5aef0", size:34},
+  {t:"ENTRANCE",     x:12, y:2,  z:3.2, color:"#f0b3ae", size:34},
+  {t:"DOCKS",        x:96, y:44, z:4.4, color:"#e8e39a", size:34},
+].forEach(l => layers.labels.add(makeLabel(l.t, {x:l.x, y:l.y, z:l.z,
+  color:l.color, size:l.size})));
 
 const HARD = new Set(["cold_room","column","wall","room"]);
 const KINDCOL = {gondola:0x2f6b4f, endcap:0x2f6b4f, promo_pallet:0x3f7a45,
@@ -196,26 +234,35 @@ function buildCoverage(){
   const band = document.getElementById("bandSel").value;
   const blindOnly = document.getElementById("t_blind").checked;
   const cov = coverageData?.[band]; if(!cov) return;
-  const pos = [], colr = [];
+  // one merged mesh of cell-sized quads at panel height — far clearer
+  // than a point cloud, and the grid itself reads as the analysis plane
+  const h = (cov.cell_m ?? 2) / 2 - 0.12;
+  const pos = [], colr = [], idx = [];
+  let v = 0;
   for(const c of cov.cells){
     if(blindOnly && c.n_aps >= minAps) continue;
-    pos.push(c.x, c.y, panelZ);     // the plane where the question is decided
-    const col = c.n_aps >= minAps ? [0.18,0.72,0.3]
-             : c.n_aps > 0 ? [0.91,0.73,0.24] : [1,0.2,0.2];
-    colr.push(...col);
+    const col = c.n_aps >= minAps ? [0.16,0.68,0.30]
+             : c.n_aps > 0 ? [0.95,0.72,0.18] : [1.0,0.16,0.16];
+    pos.push(c.x-h, c.y-h, panelZ,  c.x+h, c.y-h, panelZ,
+             c.x+h, c.y+h, panelZ,  c.x-h, c.y+h, panelZ);
+    for(let k=0;k<4;k++) colr.push(...col);
+    idx.push(v, v+1, v+2, v, v+2, v+3);
+    v += 4;
   }
   const g = new THREE.BufferGeometry();
   g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
   g.setAttribute("color", new THREE.Float32BufferAttribute(colr, 3));
-  layers.coverage.add(new THREE.Points(g,
-    new THREE.PointsMaterial({size:1.4, vertexColors:true, transparent:true, opacity:0.8})));
+  g.setIndex(idx);
+  layers.coverage.add(new THREE.Mesh(g,
+    new THREE.MeshBasicMaterial({vertexColors:true, transparent:true,
+      opacity:0.55, side:THREE.DoubleSide, depthWrite:false})));
 }
 document.getElementById("t_blind").addEventListener("change", buildCoverage);
 
 // ---- toggles
 const map = {t_shell:"shell", t_fixtures:"fixtures", t_hard:"hard",
   t_checkout:"checkout", t_docks:"docks", t_sensors:"sensors",
-  t_coverage:"coverage", t_links:"links"};
+  t_coverage:"coverage", t_links:"links", t_labels:"labels"};
 for(const [id, layer] of Object.entries(map)){
   document.getElementById(id).addEventListener("change",
     e => layers[layer].visible = e.target.checked);
@@ -234,6 +281,11 @@ const redMat = new THREE.MeshLambertMaterial({color:0xff4040});
 const shopMat = new THREE.MeshLambertMaterial({color:0x9aa5b5});
 const staffMat = new THREE.MeshLambertMaterial({color:0xe8a33e});
 const staff = new Map();
+// warning ring under a cart with <3 audible sensors
+const ringGeo = new THREE.RingGeometry(0.55, 0.95, 24);
+const ringMat = new THREE.MeshBasicMaterial({color:0xff3030, transparent:true,
+  opacity:0.75, side:THREE.DoubleSide, depthWrite:false});
+const rings = new Map();
 function rssiColor(r){   // -45 strong (green) .. -67 weak (red)
   const t = Math.max(0, Math.min(1, (r + 67) / 22));
   return new THREE.Color().setHSL(0.33*t, 0.9, 0.5);
@@ -257,8 +309,18 @@ function connect(){
       m.visible = true;
       m.position.set(c.x, c.y, 0.5);
       const ln = st.links[c.id] || [];
-      m.material = ln.length < minAps ? redMat : okMat;
-      if(ln.length < minAps) red++;
+      const isRed = ln.length < minAps;
+      m.material = isRed ? redMat : okMat;
+      let ring = rings.get(c.id);
+      if(isRed){
+        if(!ring){
+          ring = new THREE.Mesh(ringGeo, ringMat);
+          layers.agents.add(ring); rings.set(c.id, ring);
+        }
+        ring.visible = true;
+        ring.position.set(c.x, c.y, 0.06);
+        red++;
+      } else if(ring){ ring.visible = false; }
       seen.add(c.id);
     }
     const sSeen = new Set();
@@ -298,7 +360,7 @@ function connect(){
     lg.setAttribute("position", new THREE.Float32BufferAttribute(lpos, 3));
     lg.setAttribute("color", new THREE.Float32BufferAttribute(lcol, 3));
     layers.links.add(new THREE.LineSegments(lg,
-      new THREE.LineBasicMaterial({vertexColors:true, transparent:true, opacity:0.65})));
+      new THREE.LineBasicMaterial({vertexColors:true, transparent:true, opacity:0.85})));
     document.getElementById("stats").innerHTML =
       `carts active: ${active} · <span class="red">red (&lt;${minAps} AP): ${red}</span>` +
       ` · shoppers: ${st.shoppers.length} · staff: ${(st.staff||[]).length}` +
