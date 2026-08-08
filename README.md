@@ -91,6 +91,32 @@ scripts/         generate_data, build_coverage
 tests/           37 tests; layer separation enforced at AST level
 ```
 
+## Expert-team deliverables
+
+Four specialist work products sit on top of the twin, each grounded in its
+physics and each carrying provenance:
+
+- **Network design** (`docs/network_design.md`, `scripts/plan_channels.py` →
+  `data/channel_plan.json`): deterministic 1/6/11 channel plan for the 150
+  positions (balanced 50/50/50, min co-channel spacing 4.63 m — 8 m is
+  provably infeasible for this layout), PoE budget (300 units → 8× 48-port
+  UPOE switches with N+1, pair-split so a switch failure never costs a
+  logical position), VLAN plan tied to Air Marshal wiredMacs visibility.
+- **Contextual alerts** (`config/alerts.yaml`, `dlai/alerts.py`): 11 alerts
+  defined by this building's context — and two documented non-alerts (RRM
+  downlink swings; any inside/outside claim). RECOMMEND_ONLY, blind spots
+  listed per alert, layer ban intact.
+- **Sensor tuning** (`docs/sensor_tuning.md`, `config/rf_profiles.yaml`,
+  `scripts/propose_reallocation.py` → `data/reallocation_proposal.json`):
+  per-zone RF profiles (2.4 GHz as the RTLS band, TPC clamped against RRM,
+  containment off during trading) and a proven reallocation of 8 perimeter
+  units into BOH: at 5 GHz, ≥3-AP 66.9→74.8 % and blind 17.2→6.1 %, for zero
+  hardware spend.
+- **Cisco integration** (`cisco/`): Meraki Dashboard API provisioner with a
+  strict dry-run (157-entry request plan from the team's artifacts) and a
+  Scanning API v3 receiver that normalises webhooks straight into the
+  Layer-3 ingest path.
+
 ## Design notes worth remembering
 
 - **The uplink governs.** Every budget starts from the cart panel's ~16-17 dBm
