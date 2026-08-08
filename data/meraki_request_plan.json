@@ -1,0 +1,2115 @@
+{
+ "provenance": {
+  "tool": "cisco/meraki_provision.py",
+  "plan_version": 1,
+  "org_id": "{{orgId}}",
+  "network_id": "{{networkId}}",
+  "inputs": {
+   "sensors": "data/sensing_layer2.json (150 logical positions)",
+   "rf_profiles": "config/rf_profiles.yaml",
+   "channel_plan": "data/channel_plan.json",
+   "serials": "absent (per-AP entries marked serial: UNMAPPED)"
+  },
+  "fallbacks": [],
+  "unmapped_serials": 150,
+  "request_count": 157,
+  "secrets": "api key: env MERAKI_API_KEY only; scanning secret: sentinel ENV:MERAKI_SCANNING_SECRET, resolved at --apply, never written to this file"
+ },
+ "requests": [
+  {
+   "method": "POST",
+   "path": "/networks/{{networkId}}/wireless/rfProfiles",
+   "body": {
+    "applies_to_zone": "back_of_house",
+    "location": {
+     "rtls_band": "2.4",
+     "channel_width_mhz_24": 20,
+     "channels_24": [
+      1,
+      6,
+      11
+     ]
+    },
+    "tx_power": {
+     "min_dbm": 14,
+     "max_dbm": 17
+    },
+    "min_bitrate_mbps_24": 6,
+    "band_steering": {
+     "client_serving": "prefer_5ghz",
+     "scanning_radio": "dedicated"
+    },
+    "containment": {
+     "air_marshal_auto_containment": "off_during_trading_hours"
+    },
+    "name": "centro-back-of-house"
+   },
+   "note": "RF profile for zone 'back_of_house' (source: config/rf_profiles.yaml)"
+  },
+  {
+   "method": "POST",
+   "path": "/networks/{{networkId}}/wireless/rfProfiles",
+   "body": {
+    "applies_to_zone": "perimeter",
+    "role_note": "outside discrimination DOES NOT WORK (a modem 8 m out is heard by 41 sensors at -44 dBm). Remaining perimeter units are Air Marshal / neighbour-survey listeners, not an RTLS fence. Do not build features that assume they separate inside from outside.\n",
+    "location": {
+     "rtls_band": "2.4",
+     "channel_width_mhz_24": 20,
+     "channels_24": [
+      1,
+      6,
+      11
+     ]
+    },
+    "tx_power": {
+     "min_dbm": 8,
+     "max_dbm": 14
+    },
+    "min_bitrate_mbps_24": 12,
+    "band_steering": {
+     "client_serving": "prefer_5ghz",
+     "scanning_radio": "dedicated"
+    },
+    "containment": {
+     "air_marshal_auto_containment": "off_during_trading_hours"
+    },
+    "name": "centro-perimeter"
+   },
+   "note": "RF profile for zone 'perimeter' (source: config/rf_profiles.yaml)"
+  },
+  {
+   "method": "POST",
+   "path": "/networks/{{networkId}}/wireless/rfProfiles",
+   "body": {
+    "applies_to_zone": "sales_floor",
+    "location": {
+     "rtls_band": "2.4",
+     "channel_width_mhz_24": 20,
+     "channels_24": [
+      1,
+      6,
+      11
+     ]
+    },
+    "tx_power": {
+     "min_dbm": 11,
+     "max_dbm": 17
+    },
+    "min_bitrate_mbps_24": 12,
+    "band_steering": {
+     "client_serving": "prefer_5ghz",
+     "scanning_radio": "dedicated"
+    },
+    "containment": {
+     "air_marshal_auto_containment": "off_during_trading_hours"
+    },
+    "name": "centro-sales-floor"
+   },
+   "note": "RF profile for zone 'sales_floor' (source: config/rf_profiles.yaml)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S000}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-perimeter}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S000",
+   "serial": "UNMAPPED",
+   "note": "bind S000 (zone perimeter) to centro-perimeter; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S001}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-perimeter}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S001",
+   "serial": "UNMAPPED",
+   "note": "bind S001 (zone perimeter) to centro-perimeter; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S002}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-perimeter}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S002",
+   "serial": "UNMAPPED",
+   "note": "bind S002 (zone perimeter) to centro-perimeter; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S003}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-perimeter}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S003",
+   "serial": "UNMAPPED",
+   "note": "bind S003 (zone perimeter) to centro-perimeter; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S004}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-perimeter}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S004",
+   "serial": "UNMAPPED",
+   "note": "bind S004 (zone perimeter) to centro-perimeter; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S005}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-perimeter}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S005",
+   "serial": "UNMAPPED",
+   "note": "bind S005 (zone perimeter) to centro-perimeter; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S006}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-perimeter}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S006",
+   "serial": "UNMAPPED",
+   "note": "bind S006 (zone perimeter) to centro-perimeter; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S007}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-perimeter}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S007",
+   "serial": "UNMAPPED",
+   "note": "bind S007 (zone perimeter) to centro-perimeter; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S008}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-perimeter}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S008",
+   "serial": "UNMAPPED",
+   "note": "bind S008 (zone perimeter) to centro-perimeter; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S009}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-perimeter}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S009",
+   "serial": "UNMAPPED",
+   "note": "bind S009 (zone perimeter) to centro-perimeter; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S010}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-perimeter}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S010",
+   "serial": "UNMAPPED",
+   "note": "bind S010 (zone perimeter) to centro-perimeter; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S011}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-perimeter}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S011",
+   "serial": "UNMAPPED",
+   "note": "bind S011 (zone perimeter) to centro-perimeter; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S012}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-perimeter}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S012",
+   "serial": "UNMAPPED",
+   "note": "bind S012 (zone perimeter) to centro-perimeter; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S013}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-perimeter}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S013",
+   "serial": "UNMAPPED",
+   "note": "bind S013 (zone perimeter) to centro-perimeter; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S014}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-perimeter}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S014",
+   "serial": "UNMAPPED",
+   "note": "bind S014 (zone perimeter) to centro-perimeter; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S015}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-perimeter}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S015",
+   "serial": "UNMAPPED",
+   "note": "bind S015 (zone perimeter) to centro-perimeter; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S016}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-perimeter}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S016",
+   "serial": "UNMAPPED",
+   "note": "bind S016 (zone perimeter) to centro-perimeter; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S017}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-perimeter}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S017",
+   "serial": "UNMAPPED",
+   "note": "bind S017 (zone perimeter) to centro-perimeter; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S018}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S018",
+   "serial": "UNMAPPED",
+   "note": "bind S018 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S019}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S019",
+   "serial": "UNMAPPED",
+   "note": "bind S019 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S020}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S020",
+   "serial": "UNMAPPED",
+   "note": "bind S020 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S021}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S021",
+   "serial": "UNMAPPED",
+   "note": "bind S021 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S022}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S022",
+   "serial": "UNMAPPED",
+   "note": "bind S022 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S023}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S023",
+   "serial": "UNMAPPED",
+   "note": "bind S023 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S024}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S024",
+   "serial": "UNMAPPED",
+   "note": "bind S024 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S025}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S025",
+   "serial": "UNMAPPED",
+   "note": "bind S025 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S026}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S026",
+   "serial": "UNMAPPED",
+   "note": "bind S026 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S027}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S027",
+   "serial": "UNMAPPED",
+   "note": "bind S027 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S028}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S028",
+   "serial": "UNMAPPED",
+   "note": "bind S028 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S029}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S029",
+   "serial": "UNMAPPED",
+   "note": "bind S029 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S030}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S030",
+   "serial": "UNMAPPED",
+   "note": "bind S030 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S031}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S031",
+   "serial": "UNMAPPED",
+   "note": "bind S031 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S032}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S032",
+   "serial": "UNMAPPED",
+   "note": "bind S032 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S033}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S033",
+   "serial": "UNMAPPED",
+   "note": "bind S033 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S034}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S034",
+   "serial": "UNMAPPED",
+   "note": "bind S034 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S035}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S035",
+   "serial": "UNMAPPED",
+   "note": "bind S035 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S036}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S036",
+   "serial": "UNMAPPED",
+   "note": "bind S036 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S037}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S037",
+   "serial": "UNMAPPED",
+   "note": "bind S037 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S038}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S038",
+   "serial": "UNMAPPED",
+   "note": "bind S038 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S039}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S039",
+   "serial": "UNMAPPED",
+   "note": "bind S039 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S040}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S040",
+   "serial": "UNMAPPED",
+   "note": "bind S040 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S041}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S041",
+   "serial": "UNMAPPED",
+   "note": "bind S041 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S042}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S042",
+   "serial": "UNMAPPED",
+   "note": "bind S042 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S043}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S043",
+   "serial": "UNMAPPED",
+   "note": "bind S043 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S044}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S044",
+   "serial": "UNMAPPED",
+   "note": "bind S044 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S045}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S045",
+   "serial": "UNMAPPED",
+   "note": "bind S045 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S046}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S046",
+   "serial": "UNMAPPED",
+   "note": "bind S046 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S047}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S047",
+   "serial": "UNMAPPED",
+   "note": "bind S047 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S048}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S048",
+   "serial": "UNMAPPED",
+   "note": "bind S048 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S049}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S049",
+   "serial": "UNMAPPED",
+   "note": "bind S049 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S050}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S050",
+   "serial": "UNMAPPED",
+   "note": "bind S050 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S051}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S051",
+   "serial": "UNMAPPED",
+   "note": "bind S051 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S052}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S052",
+   "serial": "UNMAPPED",
+   "note": "bind S052 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S053}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S053",
+   "serial": "UNMAPPED",
+   "note": "bind S053 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S054}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S054",
+   "serial": "UNMAPPED",
+   "note": "bind S054 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S055}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S055",
+   "serial": "UNMAPPED",
+   "note": "bind S055 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S056}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S056",
+   "serial": "UNMAPPED",
+   "note": "bind S056 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S057}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S057",
+   "serial": "UNMAPPED",
+   "note": "bind S057 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S058}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S058",
+   "serial": "UNMAPPED",
+   "note": "bind S058 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S059}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S059",
+   "serial": "UNMAPPED",
+   "note": "bind S059 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S060}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S060",
+   "serial": "UNMAPPED",
+   "note": "bind S060 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S061}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S061",
+   "serial": "UNMAPPED",
+   "note": "bind S061 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S062}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S062",
+   "serial": "UNMAPPED",
+   "note": "bind S062 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S063}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S063",
+   "serial": "UNMAPPED",
+   "note": "bind S063 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S064}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S064",
+   "serial": "UNMAPPED",
+   "note": "bind S064 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S065}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S065",
+   "serial": "UNMAPPED",
+   "note": "bind S065 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S066}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S066",
+   "serial": "UNMAPPED",
+   "note": "bind S066 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S067}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S067",
+   "serial": "UNMAPPED",
+   "note": "bind S067 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S068}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S068",
+   "serial": "UNMAPPED",
+   "note": "bind S068 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S069}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S069",
+   "serial": "UNMAPPED",
+   "note": "bind S069 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S070}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S070",
+   "serial": "UNMAPPED",
+   "note": "bind S070 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S071}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S071",
+   "serial": "UNMAPPED",
+   "note": "bind S071 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S072}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S072",
+   "serial": "UNMAPPED",
+   "note": "bind S072 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S073}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S073",
+   "serial": "UNMAPPED",
+   "note": "bind S073 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S074}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S074",
+   "serial": "UNMAPPED",
+   "note": "bind S074 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S075}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S075",
+   "serial": "UNMAPPED",
+   "note": "bind S075 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S076}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S076",
+   "serial": "UNMAPPED",
+   "note": "bind S076 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S077}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S077",
+   "serial": "UNMAPPED",
+   "note": "bind S077 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S078}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S078",
+   "serial": "UNMAPPED",
+   "note": "bind S078 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S079}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S079",
+   "serial": "UNMAPPED",
+   "note": "bind S079 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S080}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S080",
+   "serial": "UNMAPPED",
+   "note": "bind S080 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S081}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S081",
+   "serial": "UNMAPPED",
+   "note": "bind S081 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S082}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S082",
+   "serial": "UNMAPPED",
+   "note": "bind S082 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S083}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S083",
+   "serial": "UNMAPPED",
+   "note": "bind S083 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S084}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S084",
+   "serial": "UNMAPPED",
+   "note": "bind S084 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S085}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S085",
+   "serial": "UNMAPPED",
+   "note": "bind S085 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S086}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S086",
+   "serial": "UNMAPPED",
+   "note": "bind S086 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S087}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S087",
+   "serial": "UNMAPPED",
+   "note": "bind S087 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S088}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S088",
+   "serial": "UNMAPPED",
+   "note": "bind S088 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S089}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S089",
+   "serial": "UNMAPPED",
+   "note": "bind S089 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S090}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S090",
+   "serial": "UNMAPPED",
+   "note": "bind S090 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S091}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S091",
+   "serial": "UNMAPPED",
+   "note": "bind S091 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S092}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S092",
+   "serial": "UNMAPPED",
+   "note": "bind S092 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S093}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S093",
+   "serial": "UNMAPPED",
+   "note": "bind S093 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S094}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S094",
+   "serial": "UNMAPPED",
+   "note": "bind S094 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S095}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S095",
+   "serial": "UNMAPPED",
+   "note": "bind S095 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S096}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S096",
+   "serial": "UNMAPPED",
+   "note": "bind S096 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S097}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S097",
+   "serial": "UNMAPPED",
+   "note": "bind S097 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S098}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S098",
+   "serial": "UNMAPPED",
+   "note": "bind S098 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S099}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S099",
+   "serial": "UNMAPPED",
+   "note": "bind S099 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S100}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S100",
+   "serial": "UNMAPPED",
+   "note": "bind S100 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S101}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S101",
+   "serial": "UNMAPPED",
+   "note": "bind S101 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S102}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S102",
+   "serial": "UNMAPPED",
+   "note": "bind S102 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S103}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S103",
+   "serial": "UNMAPPED",
+   "note": "bind S103 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S104}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S104",
+   "serial": "UNMAPPED",
+   "note": "bind S104 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S105}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S105",
+   "serial": "UNMAPPED",
+   "note": "bind S105 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S106}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S106",
+   "serial": "UNMAPPED",
+   "note": "bind S106 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S107}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S107",
+   "serial": "UNMAPPED",
+   "note": "bind S107 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S108}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S108",
+   "serial": "UNMAPPED",
+   "note": "bind S108 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S109}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S109",
+   "serial": "UNMAPPED",
+   "note": "bind S109 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S110}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S110",
+   "serial": "UNMAPPED",
+   "note": "bind S110 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S111}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S111",
+   "serial": "UNMAPPED",
+   "note": "bind S111 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S112}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S112",
+   "serial": "UNMAPPED",
+   "note": "bind S112 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S113}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S113",
+   "serial": "UNMAPPED",
+   "note": "bind S113 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S114}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S114",
+   "serial": "UNMAPPED",
+   "note": "bind S114 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S115}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S115",
+   "serial": "UNMAPPED",
+   "note": "bind S115 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S116}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S116",
+   "serial": "UNMAPPED",
+   "note": "bind S116 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S117}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S117",
+   "serial": "UNMAPPED",
+   "note": "bind S117 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S118}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S118",
+   "serial": "UNMAPPED",
+   "note": "bind S118 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S119}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S119",
+   "serial": "UNMAPPED",
+   "note": "bind S119 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S120}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S120",
+   "serial": "UNMAPPED",
+   "note": "bind S120 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S121}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-sales-floor}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S121",
+   "serial": "UNMAPPED",
+   "note": "bind S121 (zone sales_floor) to centro-sales-floor; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S122}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-back-of-house}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S122",
+   "serial": "UNMAPPED",
+   "note": "bind S122 (zone back_of_house) to centro-back-of-house; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S123}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-back-of-house}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S123",
+   "serial": "UNMAPPED",
+   "note": "bind S123 (zone back_of_house) to centro-back-of-house; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S124}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-back-of-house}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S124",
+   "serial": "UNMAPPED",
+   "note": "bind S124 (zone back_of_house) to centro-back-of-house; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S125}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-back-of-house}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S125",
+   "serial": "UNMAPPED",
+   "note": "bind S125 (zone back_of_house) to centro-back-of-house; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S126}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-back-of-house}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S126",
+   "serial": "UNMAPPED",
+   "note": "bind S126 (zone back_of_house) to centro-back-of-house; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S127}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-back-of-house}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S127",
+   "serial": "UNMAPPED",
+   "note": "bind S127 (zone back_of_house) to centro-back-of-house; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S128}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-back-of-house}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S128",
+   "serial": "UNMAPPED",
+   "note": "bind S128 (zone back_of_house) to centro-back-of-house; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S129}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-back-of-house}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S129",
+   "serial": "UNMAPPED",
+   "note": "bind S129 (zone back_of_house) to centro-back-of-house; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S130}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-back-of-house}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S130",
+   "serial": "UNMAPPED",
+   "note": "bind S130 (zone back_of_house) to centro-back-of-house; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S131}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-back-of-house}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S131",
+   "serial": "UNMAPPED",
+   "note": "bind S131 (zone back_of_house) to centro-back-of-house; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S132}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-back-of-house}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S132",
+   "serial": "UNMAPPED",
+   "note": "bind S132 (zone back_of_house) to centro-back-of-house; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S133}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-back-of-house}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S133",
+   "serial": "UNMAPPED",
+   "note": "bind S133 (zone back_of_house) to centro-back-of-house; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S134}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-back-of-house}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S134",
+   "serial": "UNMAPPED",
+   "note": "bind S134 (zone back_of_house) to centro-back-of-house; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S135}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-back-of-house}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S135",
+   "serial": "UNMAPPED",
+   "note": "bind S135 (zone back_of_house) to centro-back-of-house; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S136}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-back-of-house}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S136",
+   "serial": "UNMAPPED",
+   "note": "bind S136 (zone back_of_house) to centro-back-of-house; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S137}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-back-of-house}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S137",
+   "serial": "UNMAPPED",
+   "note": "bind S137 (zone back_of_house) to centro-back-of-house; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S138}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-back-of-house}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S138",
+   "serial": "UNMAPPED",
+   "note": "bind S138 (zone back_of_house) to centro-back-of-house; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S139}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-back-of-house}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S139",
+   "serial": "UNMAPPED",
+   "note": "bind S139 (zone back_of_house) to centro-back-of-house; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S140}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-back-of-house}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S140",
+   "serial": "UNMAPPED",
+   "note": "bind S140 (zone back_of_house) to centro-back-of-house; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S141}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-back-of-house}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S141",
+   "serial": "UNMAPPED",
+   "note": "bind S141 (zone back_of_house) to centro-back-of-house; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S142}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-back-of-house}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S142",
+   "serial": "UNMAPPED",
+   "note": "bind S142 (zone back_of_house) to centro-back-of-house; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S143}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-back-of-house}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S143",
+   "serial": "UNMAPPED",
+   "note": "bind S143 (zone back_of_house) to centro-back-of-house; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S144}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-back-of-house}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S144",
+   "serial": "UNMAPPED",
+   "note": "bind S144 (zone back_of_house) to centro-back-of-house; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S145}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-back-of-house}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S145",
+   "serial": "UNMAPPED",
+   "note": "bind S145 (zone back_of_house) to centro-back-of-house; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S146}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-back-of-house}}",
+    "twoFourGhzSettings": {
+     "channel": 1
+    }
+   },
+   "sensor_id": "S146",
+   "serial": "UNMAPPED",
+   "note": "bind S146 (zone back_of_house) to centro-back-of-house; 2.4 GHz channel 1 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S147}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-back-of-house}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S147",
+   "serial": "UNMAPPED",
+   "note": "bind S147 (zone back_of_house) to centro-back-of-house; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S148}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-back-of-house}}",
+    "twoFourGhzSettings": {
+     "channel": 6
+    }
+   },
+   "sensor_id": "S148",
+   "serial": "UNMAPPED",
+   "note": "bind S148 (zone back_of_house) to centro-back-of-house; 2.4 GHz channel 6 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/devices/{{serial:S149}}/wireless/radio/settings",
+   "body": {
+    "rfProfileId": "{{rfProfileId:centro-back-of-house}}",
+    "twoFourGhzSettings": {
+     "channel": 11
+    }
+   },
+   "sensor_id": "S149",
+   "serial": "UNMAPPED",
+   "note": "bind S149 (zone back_of_house) to centro-back-of-house; 2.4 GHz channel 11 (data/channel_plan.json)"
+  },
+  {
+   "method": "PUT",
+   "path": "/networks/{{networkId}}/alerts/settings",
+   "body": {
+    "alerts": [
+     {
+      "type": "rogueAp",
+      "enabled": true,
+      "alertDestinations": {
+       "allAdmins": true
+      }
+     }
+    ]
+   },
+   "note": "Air Marshal rogue-AP alerting (wiredMacs separates rogue from the five neighbour networks, CLAUDE.md \u00a75)"
+  },
+  {
+   "method": "PUT",
+   "path": "/networks/{{networkId}}/syslogServers",
+   "body": {
+    "servers": [
+     {
+      "host": "127.0.0.1",
+      "port": 6514,
+      "roles": [
+       "Air Marshal events",
+       "Security events"
+      ]
+     }
+    ]
+   },
+   "note": "syslog export; aWIPS syslog carries NO client identity and is throttled per signature/AP/interval \u2014 modelled as gaps, not bugs (CLAUDE.md \u00a75)"
+  },
+  {
+   "method": "PUT",
+   "path": "/networks/{{networkId}}/wireless/location/scanning",
+   "body": {
+    "analyticsEnabled": true,
+    "scanningApiEnabled": true
+   },
+   "note": "enable location analytics + Scanning API"
+  },
+  {
+   "method": "POST",
+   "path": "/networks/{{networkId}}/wireless/location/scanning/receivers",
+   "body": {
+    "url": "https://twin.example.invalid/scanning/v3",
+    "sharedSecret": "ENV:MERAKI_SCANNING_SECRET",
+    "validator": "centro-validator",
+    "apiVersion": "3",
+    "radioType": "WiFi"
+   },
+   "note": "Scanning API v3 receiver (cisco/scanning_receiver.py); GET on the url must echo the validator (Meraki handshake)"
+  }
+ ]
+}
