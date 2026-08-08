@@ -1,0 +1,637 @@
+{
+ "provenance": {
+  "generator": "scripts/plan_channels.py",
+  "algorithm": "greedy graph colouring, fixed sensor_id order; per sensor pick channel minimising sum(1/d^2) over already-assigned same-channel neighbours within neighbor_radius_m; ties break to the lowest channel; walls ignored (worst case); deterministic \u2014 no RNG",
+  "inputs": {
+   "sensors_file": "data/sensing_layer2.json",
+   "channels": [
+    1,
+    6,
+    11
+   ],
+   "channels_note": "verified \u2014 the only three non-overlapping 20 MHz channels in the 2.4 GHz band",
+   "neighbor_radius_m": 30.0,
+   "neighbor_radius_note": "assumed: engineering judgment \u2014 see scripts/plan_channels.py",
+   "target_min_spacing_m": 8.0,
+   "target_min_spacing_note": "assumed: engineering judgment; reported only \u2014 provably unattainable everywhere with 3 channels on this layout (4 sensors pairwise < 8 m)"
+  }
+ },
+ "band_ghz": 2.4,
+ "channel_width_mhz": 20,
+ "assignments": [
+  {
+   "sensor_id": "S000",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S001",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S002",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S003",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S004",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S005",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S006",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S007",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S008",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S009",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S010",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S011",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S012",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S013",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S014",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S015",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S016",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S017",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S018",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S019",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S020",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S021",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S022",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S023",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S024",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S025",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S026",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S027",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S028",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S029",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S030",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S031",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S032",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S033",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S034",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S035",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S036",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S037",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S038",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S039",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S040",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S041",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S042",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S043",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S044",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S045",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S046",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S047",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S048",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S049",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S050",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S051",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S052",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S053",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S054",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S055",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S056",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S057",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S058",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S059",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S060",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S061",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S062",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S063",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S064",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S065",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S066",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S067",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S068",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S069",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S070",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S071",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S072",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S073",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S074",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S075",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S076",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S077",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S078",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S079",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S080",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S081",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S082",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S083",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S084",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S085",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S086",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S087",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S088",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S089",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S090",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S091",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S092",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S093",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S094",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S095",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S096",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S097",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S098",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S099",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S100",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S101",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S102",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S103",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S104",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S105",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S106",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S107",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S108",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S109",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S110",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S111",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S112",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S113",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S114",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S115",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S116",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S117",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S118",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S119",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S120",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S121",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S122",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S123",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S124",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S125",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S126",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S127",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S128",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S129",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S130",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S131",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S132",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S133",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S134",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S135",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S136",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S137",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S138",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S139",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S140",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S141",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S142",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S143",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S144",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S145",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S146",
+   "channel": 1
+  },
+  {
+   "sensor_id": "S147",
+   "channel": 11
+  },
+  {
+   "sensor_id": "S148",
+   "channel": 6
+  },
+  {
+   "sensor_id": "S149",
+   "channel": 11
+  }
+ ],
+ "stats": {
+  "per_channel_counts": {
+   "1": 50,
+   "6": 50,
+   "11": 50
+  },
+  "min_same_channel_distance_m": 4.63,
+  "min_same_channel_pair": [
+   "S086",
+   "S096"
+  ],
+  "mean_cochannel_cost_per_m2": 0.098769,
+  "max_cochannel_cost_per_m2": 0.177078
+ }
+}
