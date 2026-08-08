@@ -70,6 +70,10 @@ class WorldSim:
         self.trips: dict[str, Trip] = {}          # keyed by cart_id
         self._n_shoppers = 0
         self._arrival_debt = 0.0
+        from world.staffing import StaffRoster
+        self.staff = StaffRoster(geometry=self.geometry, sales_graph=self.graph,
+                                 cfg=self.cfg, rng=random.Random(self.seed + 1),
+                                 checkouts=self.checkouts)
 
     # -- helpers -------------------------------------------------------
     def _free_cart(self) -> Cart | None:
@@ -180,6 +184,8 @@ class WorldSim:
             cart = self.carts.get(shopper.cart_id) if shopper.cart_id else None
             advance_shopper(shopper, cart, self.rng, dt_s)
 
+        self.staff.step(dt_s, now)
+
     def run(self, hours: float, dt_s: float = 0.5):
         steps = int(hours * 3600 / dt_s)
         for _ in range(steps):
@@ -194,4 +200,7 @@ class WorldSim:
                       for c in self.carts.values()],
             "shoppers": [{"id": s.id, "x": round(s.x, 3), "y": round(s.y, 3)}
                          for s in self.shoppers.values()],
+            "staff": [{"id": m.id, "x": round(m.x, 3), "y": round(m.y, 3),
+                       "role": m.role}
+                      for m in self.staff.members],
         }

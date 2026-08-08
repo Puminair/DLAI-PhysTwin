@@ -47,6 +47,26 @@ class Shopper:
 
 
 @dataclass
+class Staff:
+    """An employee on shift. A world fact — role, post, position.
+
+    Like every Layer-1 entity: no MAC, no RF identity. Their phone's MAC
+    is an observation and lives in sensing/pipeline.py. Staff bodies
+    absorb RF exactly like shoppers' — Layer 2 observes them as bodies.
+    """
+    id: str
+    provenance: str
+    role: str                            # cashier | stocker | warehouse | prep | security | manager
+    x: float = 0.0
+    y: float = 0.0
+    post_x: float = 0.0                  # home position for stationary roles
+    post_y: float = 0.0
+    speed_ms: float = 1.0
+    waypoints: list[tuple[float, float]] = field(default_factory=list)
+    dwell_until_s: float = 0.0
+
+
+@dataclass
 class Checkout:
     id: str
     provenance: str

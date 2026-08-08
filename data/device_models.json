@@ -43,5 +43,14 @@
   },
   "antenna_z_m": 1.1,
   "mac_policy": "randomized_unassociated"
+ },
+ "staff_phone": {
+  "eirp_dbm": {
+   "2.4": 14.0,
+   "5": 13.0
+  },
+  "antenna_z_m": 1.1,
+  "mac_policy": "stable_per_device",
+  "note": "associated to ops SSID; sampled, not per-tick"
  }
 }

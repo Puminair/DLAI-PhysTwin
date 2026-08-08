@@ -103,6 +103,13 @@ tests/           37 tests; layer separation enforced at AST level
 - **Flicker is the metric that matters.** Bodies are counted per-ray as dynamic
   absorbers; tracks count transitions across the 3-AP rule, and the policy
   engine downgrades trust in flickering tracks instead of acting on zigzags.
+- **A full staff shift is on the floor** (`world/staffing.py`, counts in
+  config): 12 cashiers holding lanes (unstaffed lanes close), 6 stockers, 4
+  warehouse workers on racking/dock loops, 4 prep staff, 2 security, 2
+  managers crossing between office and floor through the split-wall doorways.
+  Staff are bodies (they absorb RF like shoppers — adding the shift measurably
+  raises position error and wakes flicker) and their associated phones are
+  observed with stable MACs, sampled round-robin rather than per-tick.
 - **Gaps are the system.** Unassociated randomised MACs never reach the API;
   POSTs are jittered 60-180 s; aWIPS carries no client identity and throttling
   destroys intensity; every record says what was withheld (`gap`) and whether

@@ -392,6 +392,10 @@ def build_device_models(cfg) -> dict:
                             "mac_policy": "stable_per_device", "wired": True},
         "shopper_phone": {"eirp_dbm": {"2.4": 14.0, "5": 13.0}, "antenna_z_m": 1.1,
                           "mac_policy": "randomized_unassociated"},
+        "staff_phone": {"eirp_dbm": cfg.get("staffing.phone")["eirp_dbm"],
+                        "antenna_z_m": cfg.get("staffing.phone")["antenna_z_m"],
+                        "mac_policy": "stable_per_device",
+                        "note": "associated to ops SSID; sampled, not per-tick"},
     }
 
 

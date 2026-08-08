@@ -39,7 +39,9 @@
 <div id="legend">coverage: <span class="ok">■</span> ≥3 AP · <span style="color:#e8b93e">■</span> 1–2 ·
   <span class="red">■</span> 0 — rendered at cart-panel height, 1.00 m.<br>
   a cart drawn <span class="red">red</span> is heard by &lt;3 sensors: a positioning
-  failure, not a coverage one.</div>
+  failure, not a coverage one.<br>
+  <span style="color:#e8a33e">■</span> staff · <span style="color:#9aa5b5">■</span> shoppers —
+  every body on the floor absorbs RF.</div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 "use strict";
@@ -218,6 +220,8 @@ const shopGeo = new THREE.CylinderGeometry(0.22, 0.22, 1.7, 8);
 const okMat = new THREE.MeshLambertMaterial({color:0x3fa0e0});
 const redMat = new THREE.MeshLambertMaterial({color:0xff4040});
 const shopMat = new THREE.MeshLambertMaterial({color:0x9aa5b5});
+const staffMat = new THREE.MeshLambertMaterial({color:0xe8a33e});
+const staff = new Map();
 function rssiColor(r){   // -45 strong (green) .. -67 weak (red)
   const t = Math.max(0, Math.min(1, (r + 67) / 22));
   return new THREE.Color().setHSL(0.33*t, 0.9, 0.5);
@@ -257,6 +261,15 @@ function connect(){
       sSeen.add(s.id);
     }
     for(const [id, m] of shoppers) if(!sSeen.has(id)){ layers.agents.remove(m); shoppers.delete(id); }
+    for(const s of (st.staff || [])){
+      let m = staff.get(s.id);
+      if(!m){
+        m = new THREE.Mesh(shopGeo, staffMat);
+        m.rotation.x = Math.PI/2;
+        layers.agents.add(m); staff.set(s.id, m);
+      }
+      m.position.set(s.x, s.y, 0.85);
+    }
     // links: one segment cart -> each sensor hearing it, coloured by RSSI
     layers.links.clear();
     const lpos = [], lcol = [];
@@ -276,7 +289,8 @@ function connect(){
       new THREE.LineBasicMaterial({vertexColors:true, transparent:true, opacity:0.65})));
     document.getElementById("stats").innerHTML =
       `carts active: ${active} · <span class="red">red (&lt;${minAps} AP): ${red}</span>` +
-      ` · shoppers: ${st.shoppers.length} · band ${st.band}`;
+      ` · shoppers: ${st.shoppers.length} · staff: ${(st.staff||[]).length}` +
+      ` · band ${st.band}`;
   };
   ws.onclose = () => setTimeout(connect, 1500);
 }

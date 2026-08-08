@@ -157,3 +157,4 @@ def test_no_record_ever_links_cart_id_and_mac(cfg, field):
         blob = json.dumps(b.to_json())
         assert "cart_" not in blob, "a world id leaked into an observation"
         assert "shopper_" not in blob, "a world id leaked into an observation"
+        assert "staff_" not in blob, "a world id leaked into an observation"

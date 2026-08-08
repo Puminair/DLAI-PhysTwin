@@ -57,6 +57,8 @@ class ObservationPipeline:
         self._min_aps = self.cfg.get("rules.min_aps_for_position")
         self._loss = self.cfg.get("pipeline.record_loss_prob")
         self._post_lo, self._post_hi = self.cfg.get("pipeline.post_interval_s")
+        self._staff_every = int(self.cfg.get("staffing.phone")["observe_every_n_ticks"])
+        self._tick = 0
         self.delivered: list[ObservationBatch] = []
 
     # -- private identity management ----------------------------------
@@ -71,6 +73,19 @@ class ObservationPipeline:
                 eirp_dbm=eirp,
                 antenna_z_m=self.cfg.get("heights.cart_panel_z_m"))
         return self._rf[cart_id]
+
+    def _rf_for_staff(self, staff_id: str) -> DeviceRf:
+        """Staff phones: stable MACs, associated to the ops SSID."""
+        if staff_id not in self._rf:
+            n = len(self._rf) + 1
+            phone = self.cfg.get("staffing.phone")
+            band = phone["band"]
+            self._rf[staff_id] = DeviceRf(
+                mac=_mac("a4:5e:60", n), manufacturer="Samsung",
+                randomized=False, associated=True, band=band,
+                eirp_dbm=phone["eirp_dbm"][band],
+                antenna_z_m=phone["antenna_z_m"])
+        return self._rf[staff_id]
 
     def _rf_for_shopper(self, shopper_id: str) -> DeviceRf:
         if shopper_id not in self._rf:
@@ -93,10 +108,17 @@ class ObservationPipeline:
         return {wid: rf.mac for wid, rf in self._rf.items()}
 
     # -- observation ---------------------------------------------------
+    @staticmethod
+    def bodies_xy(snapshot: dict) -> list[tuple[float, float]]:
+        """Every human body in the world absorbs RF — shoppers AND staff."""
+        return ([(s["x"], s["y"]) for s in snapshot["shoppers"]]
+                + [(m["x"], m["y"]) for m in snapshot.get("staff", [])])
+
     def observe(self, snapshot: dict) -> None:
         """Observe one world snapshot; queue records for later delivery."""
         t_ms = snapshot["t_ms"]
-        shopper_xy = [(s["x"], s["y"]) for s in snapshot["shoppers"]]
+        self._tick += 1
+        shopper_xy = self.bodies_xy(snapshot)
 
         for cart in snapshot["carts"]:
             if cart["state"] == "docked":
@@ -117,6 +139,20 @@ class ObservationPipeline:
             records = self.field_.hear_device(
                 band=rf.band, eirp_dbm=rf.eirp_dbm,
                 device_xyz=(shopper["x"], shopper["y"], rf.antenna_z_m),
+                shopper_xy=shopper_xy)
+            if not records:
+                continue
+            self._queue_device(rf, t_ms, records)
+
+        # staff phones are associated and always present; the cloud samples
+        # them round-robin rather than reporting every phone every tick
+        for i, member in enumerate(snapshot.get("staff", [])):
+            if (self._tick + i) % self._staff_every:
+                continue
+            rf = self._rf_for_staff(member["id"])
+            records = self.field_.hear_device(
+                band=rf.band, eirp_dbm=rf.eirp_dbm,
+                device_xyz=(member["x"], member["y"], rf.antenna_z_m),
                 shopper_xy=shopper_xy)
             if not records:
                 continue
