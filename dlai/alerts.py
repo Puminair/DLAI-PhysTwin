@@ -77,6 +77,9 @@ class AlertEngine:
         self._sensor_last_seen: dict[str, int] = {}
         self._last_cart_fix: dict[str, tuple[int, float, float]] = {}
         self._probe_sightings: list[tuple[int, str]] = []
+        # sustained impossible-motion bookkeeping, per cart MAC
+        self._cart_motion_last: dict[str, tuple[int, float, float]] = {}
+        self._cart_motion_streak: dict[str, int] = {}
 
     # ------------------------------------------------------------------ inputs
 
@@ -144,6 +147,7 @@ class AlertEngine:
                         confidence="observed")
 
         self._check_cart_duplicate(obs)
+        self._check_cart_impossible_motion(obs)
         self._check_probe_surge(obs)
 
     # ------------------------------------------------------------------ rules
@@ -176,6 +180,46 @@ class AlertEngine:
                 "note": "both fixes are cloud inferences; cloning vs gross "
                         "RTLS error is not decidable from one pair",
             }, confidence="inferred")
+
+    def _check_cart_impossible_motion(self, obs: NormalisedObservation) -> None:
+        ouis = [p.lower() for p in
+                self._cond("cart_impossible_motion", "cart_oui_prefixes", [])]
+        if ouis and not any(obs.mac.lower().startswith(p) for p in ouis):
+            return
+        loc = obs.cloud_location
+        if loc is None or "x" not in loc or "y" not in loc:
+            return
+        t, x, y = obs.seen_time_ms, float(loc["x"]), float(loc["y"])
+        prev = self._cart_motion_last.get(obs.mac)
+        self._cart_motion_last[obs.mac] = (t, x, y)
+        if prev is None:
+            return
+        pt, px, py = prev
+        dt_s = (t - pt) / 1000.0
+        if dt_s <= 0:
+            return
+        speed = dist((x, y), (px, py)) / dt_s
+        max_speed = float(self._cond("cart_impossible_motion", "max_speed_ms", 1.4))
+        # sustained_fixes consecutive over-speed segments — a single fast fix
+        # under position flicker is untrustworthy, so we require a run.
+        need = int(self._cond("cart_impossible_motion", "sustained_fixes", 3))
+        if speed > max_speed:
+            streak = self._cart_motion_streak.get(obs.mac, 0) + 1
+            self._cart_motion_streak[obs.mac] = streak
+            if streak >= need:
+                self._stage("cart_impossible_motion", t, obs.mac, {
+                    "clientMac": obs.mac,
+                    "fixes": [{"t_ms": pt, "x": px, "y": py},
+                              {"t_ms": t, "x": x, "y": y}],
+                    "speeds_ms": [round(speed, 2)],
+                    "sustained_over_speed_segments": streak,
+                    "max_speed_ms": max_speed,
+                    "note": "check the flicker / low-trust track state before "
+                            "dispatch — zigzags mimic impossible motion",
+                }, confidence="inferred")
+                self._cart_motion_streak[obs.mac] = 0
+        else:
+            self._cart_motion_streak[obs.mac] = 0
 
     def _check_probe_surge(self, obs: NormalisedObservation) -> None:
         if obs.ssid is not None:

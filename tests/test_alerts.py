@@ -266,3 +266,58 @@ def test_alert_engine_imports_nothing_from_world_sensing_eval():
     assert not offenders, (
         f"alerts.py crosses the layer boundary: {offenders} — the blind "
         "test is meaningless if Layer 3 can see below Layer 2")
+
+
+# ------------------------------------------------ end-to-end circulations
+
+from eval.alert_scenarios import (        # noqa: E402  (grouped with its tests)
+    circulation_identity_and_shrink, circulation_rf_attack,
+    circulation_wire_threat, run_all_circulations)
+
+DOCS = ROOT / "docs" / "alert_catalog.md"
+
+
+def test_circulation_wire_threat_fires_its_alerts():
+    ids = {a.alert_id for a in circulation_wire_threat()}
+    assert ids == {"rogue_ap_on_wire", "rogue_ap_on_pos_vlan",
+                   "evil_twin_ops_ssid", "neighbour_network_catalogued"}
+
+
+def test_circulation_rf_attack_fires_its_alerts():
+    ids = {a.alert_id for a in circulation_rf_attack()}
+    assert ids == {"deauth_flood", "containment_active_rtls_risk",
+                   "probe_surge_unassociated", "sensor_silent"}
+
+
+def test_circulation_identity_and_shrink_fires_its_alerts():
+    ids = {a.alert_id for a in circulation_identity_and_shrink()}
+    assert ids == {"cart_mac_duplicate", "cart_impossible_motion",
+                   "exit_without_checkout"}
+
+
+def test_run_all_circulations_covers_the_full_catalog():
+    # The "all possible alert types" guarantee: if the catalog grows and no
+    # circulation exercises the new id, run_all_circulations() raises here.
+    results = run_all_circulations()
+    fired = {a.alert_id for alerts in results.values() for a in alerts}
+    catalog_ids = set(AlertEngine(CATALOG).catalog)
+    assert fired == catalog_ids, (
+        f"coverage gap: {sorted(catalog_ids - fired)} never fired")
+
+
+def test_every_circulation_alert_is_recommend_only_and_labelled():
+    for alerts in run_all_circulations().values():
+        for a in alerts:
+            assert a.mode == "RECOMMEND_ONLY", a.alert_id
+            assert a.confidence in ("observed", "inferred"), a.alert_id
+            assert isinstance(a.blind_spots, list) and a.blind_spots, a.alert_id
+            assert not IMPERATIVE.search(a.action), a.alert_id
+
+
+def test_docs_mention_every_alert_id_drift_guard():
+    text = DOCS.read_text(encoding="utf-8")
+    doc = yaml.safe_load(CATALOG.read_text(encoding="utf-8"))
+    missing = [e["id"] for e in doc["alerts"] if e["id"] not in text]
+    assert not missing, (
+        f"docs/alert_catalog.md is stale — regenerate with "
+        f"scripts/gen_alert_docs.py; missing: {missing}")
