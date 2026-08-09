@@ -1,3 +1,5 @@
 __pycache__/
 *.pyc
 .pytest_cache/
+data/capture_layer2.jsonl
+data/capture_layer2.meta.json

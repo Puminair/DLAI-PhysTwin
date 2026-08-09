@@ -28,11 +28,33 @@ Layer 3  DLAI             dlai/      agents, attack path, decision       ← con
 ```bash
 pip install pyyaml numpy pytest        # numpy optional but 100x faster geometry
 python scripts/generate_data.py        # regenerate the parametric data/ (deterministic)
-python -m pytest tests/ -q             # 37 tests incl. layer-separation enforcement
+python -m pytest tests/ -q             # full suite incl. layer-separation enforcement
 python -m eval.blind_test --hours 0.25 # the point of all of it
 python scripts/build_coverage.py       # coverage report, all bands (~30 s)
-python -m viz.server                   # live twin at http://localhost:8787/
+python -m viz.server                   # SIMULATION twin (ground truth) http://localhost:8787/
+python scripts/capture_observations.py # capture a Layer-2 stream (or use a real receiver sink)
+python -m viz.live_server              # LIVE view (Layer-3 inference only) http://localhost:8788/
 ```
+
+## Two views: the simulation and the live branch
+
+CLAUDE.md distinguishes the simulated world from *the live branch*, and both
+are here:
+
+- **`viz/server.py` — the SIMULATION view.** Runs `WorldSim` (Layer 1) and
+  shows ground truth: true carts, true shoppers, the coverage cloud. This is
+  what you debug the physics against.
+- **`viz/live_server.py` — the LIVE view.** Has **no Layer 1 at all** — it
+  imports neither `world/` nor `sensing/` (enforced by `tests/test_live.py`).
+  It consumes a Layer-2 observation stream (the JSONL sink written by
+  `cisco/scanning_receiver.py` from real Meraki Scanning API v3 webhooks, or a
+  capture from `scripts/capture_observations.py`), runs it through Layer 3
+  (`normalise_batch → EntityResolver → policy/attack → AlertEngine`), and
+  renders **only what the engine infers**: positions with their variance ring,
+  the sensors hearing each device, and live DLAI recommendations. Every dot is
+  labelled *inferred* — never a true location. This is the blind data path
+  driving a live picture, which is the entire thesis: what can the store
+  actually know from its sensors, with the truth taken away.
 
 ## Provenance of `data/`
 
