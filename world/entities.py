@@ -44,6 +44,8 @@ class Shopper:
     y: float = 0.0
     cart_id: str | None = None           # a world fact: this shopper pushes this cart
     speed_ms: float = 1.0
+    mode: str = "shopping"               # entering | shopping | leaving
+    waypoints: list[tuple[float, float]] = field(default_factory=list)
 
 
 @dataclass

@@ -41,7 +41,8 @@
   <span class="red">■</span> 0 — rendered at cart-panel height, 1.00 m.<br>
   a cart drawn <span class="red">red</span> is heard by &lt;3 sensors: a positioning
   failure, not a coverage one.<br>
-  <span style="color:#e8a33e">■</span> staff · <span style="color:#9aa5b5">■</span> shoppers —
+  <span style="color:#e8a33e">■</span> staff · <span style="color:#9aa5b5">■</span> shoppers
+  (<span style="color:#53e08a">■</span> entering · <span style="color:#e0a353">■</span> leaving) —
   every body on the floor absorbs RF.<br>
   <span style="color:#53b7e8">●●</span> <span id="sensorCount">…</span> @ 3.00 m
   (+2.5 dB selection diversity).</div>
@@ -282,6 +283,8 @@ const shopGeo = new THREE.CylinderGeometry(0.22, 0.22, 1.7, 8);
 const okMat = new THREE.MeshLambertMaterial({color:0x3fa0e0});
 const redMat = new THREE.MeshLambertMaterial({color:0xff4040});
 const shopMat = new THREE.MeshLambertMaterial({color:0x9aa5b5});
+const enterMat = new THREE.MeshLambertMaterial({color:0x53e08a});  // walking in
+const leaveMat = new THREE.MeshLambertMaterial({color:0xe0a353});  // walking out
 const staffMat = new THREE.MeshLambertMaterial({color:0xe8a33e});
 const staff = new Map();
 // warning ring under a cart with <3 audible sensors
@@ -334,6 +337,8 @@ function connect(){
         m.rotation.x = Math.PI/2;
         layers.agents.add(m); shoppers.set(s.id, m);
       }
+      m.material = s.mode === "entering" ? enterMat
+                 : s.mode === "leaving" ? leaveMat : shopMat;
       m.position.set(s.x, s.y, 0.85);
       sSeen.add(s.id);
     }

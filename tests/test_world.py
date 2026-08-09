@@ -34,10 +34,15 @@ def test_clock_is_monotonic_and_injectable():
 
 
 def test_one_simulated_hour_produces_a_coherent_trace(sim_hour):
+    from world.entities import CartState
     counts = Counter(e.type for e in sim_hour.events.events)
     assert counts["cart_undocked"] > 0
     assert counts["item_picked"] > 0
-    assert counts["payment_started"] == counts["payment_completed"]
+    # every started payment completes, except those still in progress at the
+    # one-hour cutoff (carts currently in PAYING) — a boundary effect, not a leak
+    in_flight = sum(1 for c in sim_hour.carts.values()
+                    if c.state is CartState.PAYING)
+    assert counts["payment_started"] - counts["payment_completed"] == in_flight
     assert counts["cart_exited_gate"] == counts["payment_completed"]
     # every docked cart completed the full lifecycle in order
     by_cart = defaultdict(list)

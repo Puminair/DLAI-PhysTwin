@@ -43,7 +43,9 @@ class TwinServer:
         self.geo = StoreGeometry(DATA / "store_layer1.geojson")
         self.field = SensorField(units=load_sensors(DATA / "sensing_layer2.json"),
                                  geometry=self.geo, cfg=self.cfg)
-        self.sim = WorldSim(geometry=self.geo, cfg=self.cfg)
+        # a livelier arrival rate so the door flow is visible at a glance
+        self.sim = WorldSim(geometry=self.geo, cfg=self.cfg,
+                            arrival_rate_per_min=4.0)
         self.band = band
         self.sim_dt_s = sim_dt_s
         self.time_scale = time_scale

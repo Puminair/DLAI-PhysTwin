@@ -66,8 +66,17 @@ class WorldSim:
                            direction="entry" if "entry" in f.fid else "exit")
                       for f in self.geometry.fixtures if f.kind == "gate"]
         self._gondolas = [f for f in self.geometry.fixtures if f.kind == "gondola"]
+        # entry/exit staging: a point just OUTSIDE each gate (south wall, y<0)
+        # and just inside it, so shoppers visibly walk in and out through the
+        # doors rather than materialising on the sales floor.
+        self._entry_gate = next((g for g in self.gates if g.direction == "entry"),
+                                self.gates[0])
+        self._exit_gates = [g for g in self.gates if g.direction == "exit"] or self.gates
+        self._entry_outside = (self._entry_gate.x, -3.0)
+        self._entry_inside = (self._entry_gate.x, 3.0)
         self.shoppers: dict[str, Shopper] = {}
         self.trips: dict[str, Trip] = {}          # keyed by cart_id
+        self._reserved: set[str] = set()          # carts claimed by an entering shopper
         self._n_shoppers = 0
         self._arrival_debt = 0.0
         from world.staffing import StaffRoster
@@ -78,7 +87,8 @@ class WorldSim:
     # -- helpers -------------------------------------------------------
     def _free_cart(self) -> Cart | None:
         return next((c for c in self.carts.values()
-                     if c.state is CartState.DOCKED), None)
+                     if c.state is CartState.DOCKED
+                     and c.id not in self._reserved), None)
 
     def _gondola_stop(self) -> tuple[float, float]:
         """A point in the aisle adjacent to a random gondola bay."""
@@ -88,22 +98,33 @@ class WorldSim:
         return (cx, self.graph.nearest_aisle_y(cy))
 
     def _start_trip(self):
+        """A shopper arrives from the street: spawn OUTSIDE the entrance and
+        walk in to the cart dock. The cart is reserved but stays docked until
+        the shopper reaches it (_begin_shopping)."""
         cart = self._free_cart()
         if cart is None:
             return
         self._n_shoppers += 1
         sid = f"shopper_{self._n_shoppers:04d}"
-        shopper = Shopper(id=sid, provenance="sim: arrival process",
-                          x=cart.x, y=cart.y, cart_id=cart.id,
-                          speed_ms=self.rng.uniform(*self._shopper_speed))
+        ox = self._entry_outside[0] + self.rng.uniform(-1.5, 1.5)
+        shopper = Shopper(id=sid, provenance="sim: arrival through entrance",
+                          x=ox, y=self._entry_outside[1], cart_id=cart.id,
+                          speed_ms=self.rng.uniform(*self._shopper_speed),
+                          mode="entering",
+                          waypoints=[self._entry_inside, (cart.x, cart.y)])
         self.shoppers[sid] = shopper
+        self._reserved.add(cart.id)
+        self.trips[cart.id] = Trip(cart_id=cart.id, shopper_id=sid,
+                                   stops_left=self.rng.randint(3, 9))
+
+    def _begin_shopping(self, cart: Cart, shopper: Shopper):
+        """Shopper has reached the dock and taken the cart — shopping starts."""
+        self._reserved.discard(cart.id)
+        shopper.mode = "shopping"
         cart.state = CartState.SHOPPING
         cart.speed_ms = self.rng.uniform(*self._cart_speed)
-        stops = self.rng.randint(3, 9)
-        self.trips[cart.id] = Trip(cart_id=cart.id, shopper_id=sid, stops_left=stops)
-        first = self._gondola_stop()
-        cart.waypoints = self.graph.route((cart.x, cart.y), first)
-        self.events.emit("cart_undocked", cart.id, cart.x, cart.y, shopper=sid)
+        cart.waypoints = self.graph.route((cart.x, cart.y), self._gondola_stop())
+        self.events.emit("cart_undocked", cart.id, cart.x, cart.y, shopper=shopper.id)
 
     def _next_leg(self, cart: Cart, trip: Trip):
         now = self.clock.elapsed_s()
@@ -163,28 +184,53 @@ class WorldSim:
                     co.queue.remove(cart.id)
                     self.events.emit("payment_completed", cart.id, cart.x, cart.y,
                                      checkout=co.id, items=cart.items)
-                    gate = self.rng.choice([g for g in self.gates
-                                            if g.direction == "exit"])
+                    gate = self.rng.choice(self._exit_gates)
                     cart.state = CartState.EXITING
                     cart.waypoints = [(cart.x, 3.0), (gate.x, gate.y),
                                       self.dock_xy]
                     self.events.emit("cart_exited_gate", cart.id, gate.x, gate.y,
                                      gate=gate.id)
+                    # the shopper pays and walks straight out the door; the
+                    # empty cart returns to the dock on its own.
+                    shopper = self.shoppers.get(trip.shopper_id)
+                    if shopper is not None:
+                        shopper.mode = "leaving"
+                        shopper.cart_id = None
+                        shopper.waypoints = [(gate.x, gate.y), (gate.x, -3.5)]
             elif cart.state is CartState.EXITING:
                 advance_cart(cart, dt_s)
                 if not cart.waypoints:
                     cart.state = CartState.DOCKED
                     cart.items = 0
                     self.events.emit("cart_docked", cart.id, cart.x, cart.y)
-                    sid = trip.shopper_id
-                    self.shoppers.pop(sid, None)
                     self.trips.pop(cart.id, None)
 
-        for shopper in self.shoppers.values():
-            cart = self.carts.get(shopper.cart_id) if shopper.cart_id else None
-            advance_shopper(shopper, cart, self.rng, dt_s)
+        for shopper in list(self.shoppers.values()):
+            if shopper.mode == "entering":
+                cart = self.carts.get(shopper.cart_id)
+                if self._advance_walk(shopper, dt_s) and cart is not None:
+                    self._begin_shopping(cart, shopper)
+            elif shopper.mode == "leaving":
+                if self._advance_walk(shopper, dt_s):
+                    self.shoppers.pop(shopper.id, None)   # out the door, gone
+            else:  # shopping — shadow the cart with a wandering offset
+                cart = self.carts.get(shopper.cart_id) if shopper.cart_id else None
+                advance_shopper(shopper, cart, self.rng, dt_s)
 
         self.staff.step(dt_s, now)
+
+    def _advance_walk(self, shopper: Shopper, dt_s: float) -> bool:
+        """Advance a shopper along its waypoint list. True when the last
+        waypoint is reached (list emptied)."""
+        from world.motion import step_towards
+        if not shopper.waypoints:
+            return True
+        tx, ty = shopper.waypoints[0]
+        shopper.x, shopper.y, arrived = step_towards(
+            shopper.x, shopper.y, tx, ty, shopper.speed_ms * dt_s)
+        if arrived:
+            shopper.waypoints.pop(0)
+        return not shopper.waypoints
 
     def run(self, hours: float, dt_s: float = 0.5):
         steps = int(hours * 3600 / dt_s)
@@ -198,7 +244,8 @@ class WorldSim:
             "carts": [{"id": c.id, "x": round(c.x, 3), "y": round(c.y, 3),
                        "state": c.state.value}
                       for c in self.carts.values()],
-            "shoppers": [{"id": s.id, "x": round(s.x, 3), "y": round(s.y, 3)}
+            "shoppers": [{"id": s.id, "x": round(s.x, 3), "y": round(s.y, 3),
+                          "mode": s.mode}
                          for s in self.shoppers.values()],
             "staff": [{"id": m.id, "x": round(m.x, 3), "y": round(m.y, 3),
                        "role": m.role}
