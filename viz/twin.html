@@ -18,6 +18,28 @@
   #legend{position:fixed;bottom:10px;left:10px;color:#8fa1b8;z-index:2;
     background:rgba(10,14,20,.85);border:1px solid #263042;border-radius:8px;
     padding:8px 12px}
+  /* live traffic dashboard — palette validated (dataviz skill) */
+  #traffic{position:fixed;top:10px;right:10px;width:290px;z-index:2;
+    background:rgba(12,16,22,.92);border:1px solid #263042;border-radius:10px;
+    padding:12px 14px;--ppl:#3987e5;--cart:#d95926;--staff:#199e70;
+    --ink:#e8eef7;--ink2:#c3c2b7;--muted:#898781;--grid:#2c2c2a}
+  #traffic h2{font-size:12px;margin:0 0 2px;color:var(--ink);letter-spacing:.3px}
+  #traffic .sub{color:var(--muted);font-size:10px;margin-bottom:10px}
+  #traffic .tiles{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:6px}
+  #traffic .tile{background:rgba(255,255,255,.03);border-radius:7px;padding:7px 8px}
+  #traffic .tile .n{font-size:23px;font-weight:700;line-height:1;
+    font-variant-numeric:tabular-nums}
+  #traffic .tile .l{font-size:10px;color:var(--ink2);margin-top:3px}
+  #traffic .dotp{color:var(--ppl)}#traffic .dotc{color:var(--cart)}#traffic .dots{color:var(--staff)}
+  #traffic .rates{display:flex;gap:14px;color:var(--ink2);font-size:11px;margin:2px 0 8px}
+  #traffic .rates b{color:var(--ink);font-variant-numeric:tabular-nums}
+  #traffic .chart{margin-top:8px}
+  #traffic .chart .ct{display:flex;justify-content:space-between;font-size:10px;
+    color:var(--ink2);margin-bottom:2px}
+  #traffic .chart .ct .peak{color:var(--muted);font-variant-numeric:tabular-nums}
+  #traffic canvas{display:block;width:100%;height:44px}
+  #traffic .modes{display:flex;gap:6px;margin-top:8px;font-size:10px;color:var(--muted)}
+  #traffic .modes span b{color:var(--ink2);font-variant-numeric:tabular-nums}
 </style>
 </head>
 <body>
@@ -33,6 +55,7 @@
   <label><input type="checkbox" id="t_blind"> blind-only (&lt;3 AP)</label>
   <label><input type="checkbox" id="t_links" checked> links</label>
   <label><input type="checkbox" id="t_labels" checked> labels</label>
+  <label><input type="checkbox" id="t_traffic" checked> traffic panel</label>
   <label><input type="checkbox" id="t_plan"> plan view</label>
   <label>coverage band <select id="bandSel"></select></label>
   <div class="stat" id="stats">connecting…</div>
@@ -44,6 +67,34 @@
   <span style="color:#e8a33e">■</span> staff · <span style="color:#9aa5b5">■</span> shoppers
   (<span style="color:#53e08a">■</span> entering · <span style="color:#e0a353">■</span> leaving) —
   every body on the floor absorbs RF.<br>
+</div>
+<div id="traffic">
+  <h2>Store traffic</h2>
+  <div class="sub" id="tclock">live counts · ground truth</div>
+  <div class="tiles">
+    <div class="tile"><div class="n dotp" id="v_people">–</div><div class="l">people in store</div></div>
+    <div class="tile"><div class="n dotc" id="v_carts">–</div><div class="l">active carts</div></div>
+    <div class="tile"><div class="n dots" id="v_staff">–</div><div class="l">staff on shift</div></div>
+  </div>
+  <div class="rates">
+    <span>in <b id="v_in">–</b>/min</span>
+    <span>out <b id="v_out">–</b>/min</span>
+    <span>paid <b id="v_paid">–</b></span>
+    <span>queue <b id="v_queue">–</b></span>
+  </div>
+  <div class="chart">
+    <div class="ct"><span class="dotp">shoppers in store</span><span class="peak" id="pk_people"></span></div>
+    <canvas id="c_people" width="262" height="44"></canvas>
+  </div>
+  <div class="chart">
+    <div class="ct"><span class="dotc">active carts</span><span class="peak" id="pk_carts"></span></div>
+    <canvas id="c_carts" width="262" height="44"></canvas>
+  </div>
+  <div class="modes">
+    <span><span style="color:#53e08a">●</span> entering <b id="m_in">0</b></span>
+    <span><span style="color:#9aa5b5">●</span> shopping <b id="m_shop">0</b></span>
+    <span><span style="color:#e0a353">●</span> leaving <b id="m_out">0</b></span>
+  </div>
   <span style="color:#53b7e8">●●</span> <span id="sensorCount">…</span> @ 3.00 m
   (+2.5 dB selection diversity).</div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -297,6 +348,65 @@ function rssiColor(r){   // -45 strong (green) .. -67 weak (red)
   return new THREE.Color().setHSL(0.33*t, 0.9, 0.5);
 }
 
+// ---- live traffic dashboard
+document.getElementById("t_traffic").addEventListener("change",
+  e => document.getElementById("traffic").style.display = e.target.checked ? "" : "none");
+const tHist = [];          // {t_ms, people, carts, entered, exited}
+const MAXH = 240, WIN_MS = 90000;   // rolling window ~ 90 sim-seconds
+function drawSpark(id, key, color){
+  const cv = document.getElementById(id), ctx = cv.getContext("2d");
+  const w = cv.width, h = cv.height, pad = 3;
+  ctx.clearRect(0,0,w,h);
+  const pts = tHist.slice(-120);
+  if(pts.length < 2) return 0;
+  const vals = pts.map(p => p[key]);
+  const mx = Math.max(1, ...vals);
+  const xAt = i => pad + i*(w-2*pad)/(pts.length-1);
+  const yAt = v => h-pad - v*(h-2*pad)/mx;
+  // baseline-anchored area fill (thin, recessive) then the 2px line
+  ctx.beginPath(); ctx.moveTo(xAt(0), h-pad);
+  pts.forEach((p,i)=>ctx.lineTo(xAt(i), yAt(p[key])));
+  ctx.lineTo(xAt(pts.length-1), h-pad); ctx.closePath();
+  ctx.fillStyle = color+"22"; ctx.fill();
+  ctx.beginPath(); pts.forEach((p,i)=> i?ctx.lineTo(xAt(i),yAt(p[key])):ctx.moveTo(xAt(i),yAt(p[key])));
+  ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.lineJoin = "round"; ctx.stroke();
+  // current-value dot (>=8px target: r=3.5 -> 7px, on a 2px surface ring)
+  const lx = xAt(pts.length-1), ly = yAt(vals[vals.length-1]);
+  ctx.beginPath(); ctx.arc(lx,ly,3.5,0,7); ctx.fillStyle=color;
+  ctx.strokeStyle="#0c1016"; ctx.lineWidth=2; ctx.fill(); ctx.stroke();
+  return mx;
+}
+function updateTraffic(st){
+  const tr = st.traffic; if(!tr) return;
+  tHist.push({t_ms: st.t_ms, people: tr.shoppers, carts: tr.carts_active,
+    entered: tr.entered_cumulative, exited: tr.exited_cumulative});
+  if(tHist.length > MAXH) tHist.shift();
+  document.getElementById("v_people").textContent = tr.shoppers;
+  document.getElementById("v_carts").textContent = tr.carts_active;
+  document.getElementById("v_staff").textContent = tr.staff;
+  document.getElementById("v_paid").textContent = tr.paid_cumulative;
+  document.getElementById("v_queue").textContent = tr.in_queue + tr.paying;
+  document.getElementById("m_in").textContent = tr.entering;
+  document.getElementById("m_shop").textContent = tr.shopping;
+  document.getElementById("m_out").textContent = tr.leaving;
+  // per-minute rates from the earliest sample within the window (sim clock)
+  const now = st.t_ms;
+  let ref = tHist[0];
+  for(const p of tHist){ if(now - p.t_ms <= WIN_MS){ ref = p; break; } }
+  const dtMin = Math.max(1/60, (now - ref.t_ms)/60000);
+  document.getElementById("v_in").textContent = Math.round((tr.entered_cumulative-ref.entered)/dtMin);
+  document.getElementById("v_out").textContent = Math.round((tr.exited_cumulative-ref.exited)/dtMin);
+  const pkP = drawSpark("c_people","people","#3987e5");
+  const pkC = drawSpark("c_carts","carts","#d95926");
+  document.getElementById("pk_people").textContent = "peak "+pkP;
+  document.getElementById("pk_carts").textContent = "peak "+pkC;
+  if(tHist.t0 === undefined) tHist.t0 = st.t_ms;      // first frame = elapsed origin
+  const el = Math.max(0, st.t_ms - tHist.t0);
+  const mm = Math.floor(el/60000)%60, hh = Math.floor(el/3600000);
+  document.getElementById("tclock").textContent =
+    `live counts · ground truth · t+${String(hh).padStart(2,"0")}:${String(mm).padStart(2,"0")}`;
+}
+
 function connect(){
   const ws = new WebSocket((location.protocol==="https:"?"wss://":"ws://")+location.host+"/ws");
   ws.onmessage = ev => {
@@ -373,6 +483,7 @@ function connect(){
       `carts active: ${active} · <span class="red">red (&lt;${minAps} AP): ${red}</span>` +
       ` · shoppers: ${st.shoppers.length} · staff: ${(st.staff||[]).length}` +
       ` · band ${st.band}`;
+    updateTraffic(st);
   };
   ws.onclose = () => setTimeout(connect, 1500);
 }

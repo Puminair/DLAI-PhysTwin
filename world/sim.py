@@ -77,7 +77,10 @@ class WorldSim:
         self.shoppers: dict[str, Shopper] = {}
         self.trips: dict[str, Trip] = {}          # keyed by cart_id
         self._reserved: set[str] = set()          # carts claimed by an entering shopper
-        self._n_shoppers = 0
+        self._n_shoppers = 0                       # cumulative arrivals (entered)
+        self._exited = 0                           # cumulative departures (out the door)
+        self._paid = 0                             # cumulative checkout completions
+        self._x_split = self.cfg.get("areas.x_split_m")
         self._arrival_debt = 0.0
         from world.staffing import StaffRoster
         self.staff = StaffRoster(geometry=self.geometry, sales_graph=self.graph,
@@ -184,6 +187,7 @@ class WorldSim:
                     co.queue.remove(cart.id)
                     self.events.emit("payment_completed", cart.id, cart.x, cart.y,
                                      checkout=co.id, items=cart.items)
+                    self._paid += 1
                     gate = self.rng.choice(self._exit_gates)
                     cart.state = CartState.EXITING
                     cart.waypoints = [(cart.x, 3.0), (gate.x, gate.y),
@@ -213,6 +217,7 @@ class WorldSim:
             elif shopper.mode == "leaving":
                 if self._advance_walk(shopper, dt_s):
                     self.shoppers.pop(shopper.id, None)   # out the door, gone
+                    self._exited += 1
             else:  # shopping — shadow the cart with a wandering offset
                 cart = self.carts.get(shopper.cart_id) if shopper.cart_id else None
                 advance_shopper(shopper, cart, self.rng, dt_s)
@@ -250,4 +255,39 @@ class WorldSim:
             "staff": [{"id": m.id, "x": round(m.x, 3), "y": round(m.y, 3),
                        "role": m.role}
                       for m in self.staff.members],
+            "traffic": self._traffic(),
+        }
+
+    def _traffic(self) -> dict:
+        """Live aggregate counts — Layer-1 facts about how busy the store is."""
+        modes = {"entering": 0, "shopping": 0, "leaving": 0}
+        people_sales = 0
+        for s in self.shoppers.values():
+            modes[s.mode] = modes.get(s.mode, 0) + 1
+            if s.x < self._x_split and s.y > 0:
+                people_sales += 1
+        active = queuing = paying = 0
+        for c in self.carts.values():
+            if c.state is CartState.DOCKED:
+                continue
+            active += 1
+            if c.state is CartState.QUEUING:
+                queuing += 1
+            elif c.state is CartState.PAYING:
+                paying += 1
+        return {
+            "shoppers": len(self.shoppers),
+            "entering": modes["entering"],
+            "shopping": modes["shopping"],
+            "leaving": modes["leaving"],
+            "staff": len(self.staff.members),
+            "carts_active": active,
+            "carts_docked": len(self.carts) - active,
+            "in_queue": queuing,
+            "paying": paying,
+            "checkouts_open": sum(1 for c in self.checkouts.values() if c.open),
+            "entered_cumulative": self._n_shoppers,
+            "exited_cumulative": self._exited,
+            "paid_cumulative": self._paid,
+            "people_sales_floor": people_sales,
         }

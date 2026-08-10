@@ -111,6 +111,7 @@ class TwinServer:
                 "carts": snap["carts"],
                 "shoppers": snap["shoppers"],
                 "staff": snap["staff"],
+                "traffic": snap["traffic"],
                 "links": self.links,
                 "band": self.band,
             })

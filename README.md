@@ -42,8 +42,11 @@ CLAUDE.md distinguishes the simulated world from *the live branch*, and both
 are here:
 
 - **`viz/server.py` — the SIMULATION view.** Runs `WorldSim` (Layer 1) and
-  shows ground truth: true carts, true shoppers, the coverage cloud. This is
-  what you debug the physics against.
+  shows ground truth: true carts, true shoppers, the coverage cloud, and a
+  **live traffic dashboard** — people/carts/staff counts, entry & exit rates
+  per minute, checkout throughput, and rolling sparklines of shoppers and
+  carts over time (palette validated with the dataviz method). This is what
+  you debug the physics against.
 - **`viz/live_server.py` — the LIVE view.** Has **no Layer 1 at all** — it
   imports neither `world/` nor `sensing/` (enforced by `tests/test_live.py`).
   It consumes a Layer-2 observation stream (the JSONL sink written by
