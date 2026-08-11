@@ -40,6 +40,38 @@
   #traffic canvas{display:block;width:100%;height:44px}
   #traffic .modes{display:flex;gap:6px;margin-top:8px;font-size:10px;color:var(--muted)}
   #traffic .modes span b{color:var(--ink2);font-variant-numeric:tabular-nums}
+  /* floating attack-surface window — draggable, defensive threat model */
+  #attackwin{position:fixed;top:96px;left:360px;width:430px;max-height:80vh;z-index:5;
+    display:none;flex-direction:column;background:rgba(12,16,22,.97);
+    border:1px solid #37455f;border-radius:11px;box-shadow:0 12px 44px rgba(0,0,0,.55)}
+  #attackwin.open{display:flex}
+  #attackwin header{cursor:move;padding:10px 13px;border-bottom:1px solid #263042;
+    display:flex;justify-content:space-between;align-items:center;user-select:none}
+  #attackwin header h2{margin:0;font-size:13px;color:#e8eef7}
+  #attackwin header h2 small{color:#8fa1b8;font-weight:400;font-size:11px}
+  #attackwin header .x{cursor:pointer;color:#8fa1b8;font-weight:700;padding:0 5px;font-size:15px}
+  #attackwin .meta{padding:7px 13px;color:#8fa1b8;border-bottom:1px solid #1c2431;font-size:11px}
+  #attackwin .meta b{color:#cfd6e1;font-variant-numeric:tabular-nums}
+  #attackwin .filters{display:flex;flex-wrap:wrap;gap:5px;padding:8px 12px;
+    border-bottom:1px solid #1c2431}
+  #attackwin .chip{cursor:pointer;padding:2px 9px;border-radius:11px;border:1px solid #33405a;
+    color:#aab6c8;font-size:11px;user-select:none}
+  #attackwin .chip.on{background:#2a3b57;color:#e8eef7;border-color:#4a5f85}
+  #attackwin .list{overflow-y:auto;padding:5px 7px}
+  .atk{border-left:3px solid #555;background:rgba(255,255,255,.02);border-radius:5px;
+    margin:5px 4px;padding:7px 10px}
+  .atk .hd{display:flex;justify-content:space-between;gap:8px;cursor:pointer;align-items:baseline}
+  .atk .nm{font-weight:600;color:#e8eef7;font-size:12px}
+  .atk .cat{font-size:10px;color:#8fa1b8;margin-top:2px}
+  .atk .sev{font-size:10px;font-weight:700;padding:1px 7px;border-radius:9px;white-space:nowrap}
+  .atk .body{display:none;margin-top:7px;color:#c3c2b7;font-size:11px;line-height:1.55}
+  .atk.open .body{display:block}
+  .atk .row{margin:4px 0}.atk .k{color:#8090a4}
+  .shield{font-size:10px;font-weight:700;padding:1px 7px;border-radius:9px}
+  .det{background:rgba(12,163,12,.18);color:#7fd67f}
+  .blind{background:rgba(208,59,59,.22);color:#f0908f}
+  .partial{background:rgba(250,178,25,.16);color:#f3c65a}
+  .crit{border-color:#d03b3b}.ser{border-color:#ec835a}.wn{border-color:#fab219}.inf{border-color:#53b7e8}
 </style>
 </head>
 <body>
@@ -56,6 +88,7 @@
   <label><input type="checkbox" id="t_links" checked> links</label>
   <label><input type="checkbox" id="t_labels" checked> labels</label>
   <label><input type="checkbox" id="t_traffic" checked> traffic panel</label>
+  <label><input type="checkbox" id="t_attacks"> attack surface ▸</label>
   <label><input type="checkbox" id="t_plan"> plan view</label>
   <label>coverage band <select id="bandSel"></select></label>
   <div class="stat" id="stats">connecting…</div>
@@ -97,6 +130,15 @@
   </div>
   <span style="color:#53b7e8">●●</span> <span id="sensorCount">…</span> @ 3.00 m
   (+2.5 dB selection diversity).</div>
+<div id="attackwin">
+  <header id="atkbar">
+    <h2>Attack surface <small id="atksite"></small></h2>
+    <span class="x" id="atkclose">✕</span>
+  </header>
+  <div class="meta" id="atkmeta"></div>
+  <div class="filters" id="atkfilters"></div>
+  <div class="list" id="atklist"></div>
+</div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 "use strict";
@@ -406,6 +448,92 @@ function updateTraffic(st){
   document.getElementById("tclock").textContent =
     `live counts · ground truth · t+${String(hh).padStart(2,"0")}:${String(mm).padStart(2,"0")}`;
 }
+
+// ---- floating attack-surface window (defensive threat model)
+const SEV = {critical:{c:"#d03b3b",cls:"crit",ic:"▲",r:4},
+  serious:{c:"#ec835a",cls:"ser",ic:"◆",r:3}, warn:{c:"#fab219",cls:"wn",ic:"●",r:2},
+  info:{c:"#53b7e8",cls:"inf",ic:"■",r:1}};
+let atkData = null, atkFilter = {cat:"all", blind:false};
+const atkWin = document.getElementById("attackwin");
+function openAtk(on){
+  atkWin.classList.toggle("open", on);
+  document.getElementById("t_attacks").checked = on;
+  if(on && !atkData) loadAttacks();
+}
+document.getElementById("t_attacks").addEventListener("change", e => openAtk(e.target.checked));
+document.getElementById("atkclose").addEventListener("click", () => openAtk(false));
+
+function loadAttacks(){
+  fetch("attacks.json").then(r=>r.json()).then(d => {
+    atkData = d;
+    document.getElementById("atksite").textContent = "· " + (d.meta?.site||"");
+    const cats = ["all", ...Object.keys(d.categories||{})];
+    const fbox = document.getElementById("atkfilters");
+    fbox.innerHTML = cats.map(c =>
+      `<span class="chip${c==="all"?" on":""}" data-cat="${c}">${c==="all"?"all":c.replace(/_/g," ")}</span>`).join("")
+      + `<span class="chip" data-blind="1">⦸ blind spots</span>`;
+    fbox.querySelectorAll("[data-cat]").forEach(ch => ch.onclick = () => {
+      atkFilter.cat = ch.dataset.cat;
+      fbox.querySelectorAll("[data-cat]").forEach(x=>x.classList.toggle("on", x===ch));
+      renderAttacks();
+    });
+    const bch = fbox.querySelector("[data-blind]");
+    bch.onclick = () => { atkFilter.blind = !atkFilter.blind; bch.classList.toggle("on", atkFilter.blind); renderAttacks(); };
+    renderAttacks();
+  });
+}
+function renderAttacks(){
+  const d = atkData, list = document.getElementById("atklist");
+  let items = d.attacks;
+  if(atkFilter.cat !== "all") items = items.filter(a => a.category === atkFilter.cat);
+  if(atkFilter.blind) items = items.filter(a => a.blind_spot);
+  const total = d.attacks.length;
+  const blind = d.attacks.filter(a=>a.blind_spot).length;
+  const detected = d.attacks.filter(a=>(a.detected_by||[]).length && !a.blind_spot).length;
+  document.getElementById("atkmeta").innerHTML =
+    `<b>${total}</b> attack types · <span style="color:#7fd67f"><b>${detected}</b> detected</span> · `+
+    `<span style="color:#f0908f"><b>${blind}</b> blind spots</span> · showing <b>${items.length}</b>`;
+  const order = {critical:0,serious:1,warn:2,info:3};
+  items = items.slice().sort((a,b)=>(order[a.severity]??9)-(order[b.severity]??9));
+  list.innerHTML = items.map(a => {
+    const s = SEV[a.severity] || SEV.info;
+    const det = (a.detected_by||[]);
+    let shield;
+    if(a.blind_spot && det.length) shield = `<span class="shield partial">◐ partial — ${det.join(", ")}</span>`;
+    else if(a.blind_spot) shield = `<span class="shield blind">⦸ BLIND SPOT</span>`;
+    else shield = `<span class="shield det">✓ ${det.join(", ")}</span>`;
+    return `<div class="atk ${s.cls}" data-id="${a.id}">
+      <div class="hd">
+        <div><div class="nm">${a.name}</div><div class="cat">${a.category.replace(/_/g," ")}</div></div>
+        <span class="sev" style="background:${s.c}22;color:${s.c}">${s.ic} ${a.severity}</span>
+      </div>
+      <div class="body">
+        <div class="row"><span class="k">targets:</span> ${a.target}</div>
+        <div class="row"><span class="k">vector:</span> ${a.vector}</div>
+        <div class="row"><span class="k">why this store:</span> ${a.store_context}</div>
+        <div class="row">${shield}${a.blind_spot_reason?` <span style="color:#8090a4">— ${a.blind_spot_reason}</span>`:""}</div>
+        <div class="row"><span class="k">mitigation:</span> ${a.mitigation}</div>
+      </div></div>`;
+  }).join("");
+  list.querySelectorAll(".atk .hd").forEach(h =>
+    h.onclick = () => h.parentElement.classList.toggle("open"));
+}
+// drag the window by its header
+(function(){
+  const bar = document.getElementById("atkbar");
+  let d = null;
+  bar.addEventListener("mousedown", e => {
+    if(e.target.id === "atkclose") return;
+    const r = atkWin.getBoundingClientRect();
+    d = {ox:e.clientX-r.left, oy:e.clientY-r.top}; e.preventDefault();
+  });
+  addEventListener("mousemove", e => {
+    if(!d) return;
+    atkWin.style.left = Math.max(0, Math.min(innerWidth-80, e.clientX-d.ox)) + "px";
+    atkWin.style.top  = Math.max(0, Math.min(innerHeight-40, e.clientY-d.oy)) + "px";
+  });
+  addEventListener("mouseup", () => d=null);
+})();
 
 function connect(){
   const ws = new WebSocket((location.protocol==="https:"?"wss://":"ws://")+location.host+"/ws");

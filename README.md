@@ -141,6 +141,16 @@ physics and each carrying provenance:
   defined by this building's context — and two documented non-alerts (RRM
   downlink swings; any inside/outside claim). RECOMMEND_ONLY, blind spots
   listed per alert, layer ban intact.
+- **Attack surface** (`config/attack_catalog.yaml`, floating window in the
+  twin): 15 store-specific attack classes — the offensive mirror of the alert
+  catalog — each with target, why-this-store, severity, the alert that detects
+  it (or an honest **blind spot** with its reason), and a RECOMMEND_ONLY
+  mitigation. 10 are detected, 5 are structural blind spots (perimeter
+  inside/outside, aWIPS intensity, MAC randomization, station-to-station,
+  cold-room shadow). A test asserts every detection references a real alert id
+  and every CLAUDE.md-documented limit is catalogued as a blind spot. The twin
+  serves it at `/attacks.json` and renders it in a draggable, filterable panel
+  (toggle "attack surface ▸").
 - **Sensor tuning** (`docs/sensor_tuning.md`, `config/rf_profiles.yaml`,
   `scripts/propose_reallocation.py` → `data/reallocation_proposal.json`):
   per-zone RF profiles (2.4 GHz as the RTLS band, TPC clamped against RRM,

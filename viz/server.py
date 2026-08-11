@@ -76,6 +76,15 @@ class TwinServer:
             }).encode()
         return self._scene_cache
 
+    def attacks_payload(self) -> bytes:
+        """The store-specific attack catalogue, served to the floating panel."""
+        if getattr(self, "_attacks_cache", None) is None:
+            import yaml
+            with open(ROOT / "config" / "attack_catalog.yaml", "r",
+                      encoding="utf-8") as fh:
+                self._attacks_cache = json.dumps(yaml.safe_load(fh)).encode()
+        return self._attacks_cache
+
     # -- simulation loops ----------------------------------------------
     async def run_sim(self):
         while True:
@@ -178,6 +187,9 @@ class TwinServer:
 
         if path == "/scene.json":
             body = self.scene_payload()
+            ctype = "application/json"
+        elif path == "/attacks.json":
+            body = self.attacks_payload()
             ctype = "application/json"
         else:
             body = (Path(__file__).parent / "twin.html").read_bytes()

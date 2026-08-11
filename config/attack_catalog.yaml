@@ -1,0 +1,259 @@
+# Attack surface — Yochananof Centro Rehovot
+#
+# A DEFENSIVE threat model: every attack type that applies specifically to
+# this store, mapped to what it targets, why this building's context shapes
+# it, whether the DLAI detects it (which alert) or it is a structural blind
+# spot, and the RECOMMEND_ONLY mitigation. Threat-model altitude only — this
+# names attack CLASSES and their detections/mitigations, never operational
+# steps. It is the offensive mirror of config/alerts.yaml; every `detected_by`
+# id must exist there (enforced by tests/test_attack_catalog.py), and every
+# blind_spot is a limitation documented in CLAUDE.md.
+#
+# provenance: derived from CLAUDE.md sections 5/6/9, dlai/attack.py,
+# dlai/alerts.py and config/alerts.yaml. Severity scale: info < warn <
+# serious < critical.
+
+meta:
+  site: "Yochananof Centro Rehovot"
+  posture: RECOMMEND_ONLY
+  note: "Defensive threat catalogue. Names attack classes, detections and
+         mitigations — not exploit procedures. Blind spots are structural
+         limits of RF sensing here, not to-do items."
+
+categories:
+  network_intrusion: "Wired-side intrusion reaching store segments"
+  wireless_rf:       "Over-the-air attacks on the WLAN"
+  identity_spoofing: "Forged device identity / location"
+  surveillance_evasion: "Moving or hiding beneath the sensing floor"
+  loss_prevention:   "Physical shrink visible only through inference"
+
+attacks:
+  - id: rogue_ap_on_wire
+    name: "Rogue AP bridged to the store network"
+    category: network_intrusion
+    target: "Store LAN / ops segment"
+    vector: "An unauthorized access point attached to the wired network
+             bridges wireless clients onto an internal VLAN."
+    store_context: "Five neighbour networks share this floor and the one
+                    above; wiredMacs is the ONLY field that separates an
+                    on-wire rogue from a neighbour broadcast."
+    severity: critical
+    detected_by: [rogue_ap_on_wire]
+    blind_spot: false
+    mitigation: "Isolate the switch port carrying the reported wiredMacs;
+                 dispatch to locate. Recommend-only."
+
+  - id: rogue_ap_on_pos_vlan
+    name: "Rogue AP on the payment (POS) VLAN"
+    category: network_intrusion
+    target: "Payment infrastructure — VLAN 12"
+    vector: "A bridged rogue whose wiredVlans include the POS segment,
+             giving L2 adjacency to payment terminals."
+    store_context: "POS traffic is segmented onto VLAN 12; a rogue that
+                    reports that VLAN is a payment-infrastructure incident,
+                    not a nuisance."
+    severity: critical
+    detected_by: [rogue_ap_on_pos_vlan, rogue_ap_on_wire]
+    blind_spot: false
+    mitigation: "Treat as a payment incident: port isolation + security
+                 dispatch + card-network notification path."
+
+  - id: supply_chain_dock_rogue
+    name: "Rogue introduced at the loading dock"
+    category: network_intrusion
+    target: "Warehouse / dock network drop"
+    vector: "A device attached at an east-dock network point during a
+             delivery, bridging onto the warehouse VLAN."
+    store_context: "The four east docks are the least-supervised wired
+                    drops; BOH sensor density is thin, so RF corroboration
+                    is weakest exactly here."
+    severity: serious
+    detected_by: [rogue_ap_on_wire]
+    blind_spot: false
+    mitigation: "Wire-side port security on dock drops; the on-wire alert
+                 still fires, but do not expect RF location support in BOH."
+
+  - id: deauth_flood
+    name: "Deauthentication / disassociation flood"
+    category: wireless_rf
+    target: "Client connectivity (carts, POS, staff)"
+    vector: "Spoofed management frames knock associated clients off the WLAN."
+    store_context: "aWIPS reports the signature but carries NO client
+                    identity and is throttled to one message per signature
+                    per AP per interval — the attack's INTENSITY is lost."
+    severity: warn
+    detected_by: [deauth_flood]
+    blind_spot: false
+    mitigation: "Correlate reports across APs by time bucket to bound
+                 location; intensity is unknowable and must not be estimated."
+
+  - id: evil_twin_ops_ssid
+    name: "Evil-twin of the operations SSID"
+    category: wireless_rf
+    target: "Cart panels / staff devices (credential lure)"
+    vector: "An AP advertising the centro-ops SSID to lure clients."
+    store_context: "Without wire evidence this cannot be told from a
+                    neighbour — five neighbour networks share the airspace,
+                    so it caps at warn, never high."
+    severity: warn
+    detected_by: [evil_twin_ops_ssid]
+    blind_spot: false
+    mitigation: "On-air verification BEFORE any containment (containment
+                 degrades RTLS — see below)."
+
+  - id: containment_abuse
+    name: "Containment-induced RTLS degradation"
+    category: wireless_rf
+    target: "Real-time location accuracy"
+    vector: "Provoking Air Marshal auto-containment so the scanning radio
+             time-splits and location accuracy drops store-wide."
+    store_context: "Containment is itself an operational risk here: the
+                    scanning radio time-splits and RTLS accuracy degrades
+                    while it runs — an attacker can weaponize the defense."
+    severity: warn
+    detected_by: [containment_active_rtls_risk]
+    blind_spot: false
+    mitigation: "Auto-containment OFF during trading hours; time-box any
+                 manual containment and treat positions as low-trust during it."
+
+  - id: cart_mac_clone
+    name: "Cart panel MAC cloning"
+    category: identity_spoofing
+    target: "Cart identity / asset tracking"
+    vector: "Duplicating a cart panel's MAC so two devices present the same
+             identity simultaneously."
+    store_context: "Cart panels use stable MACs on the 0c:8b:7d OUI at
+                    2.4 GHz; the same MAC resolving to positions >30 m apart
+                    within seconds is physically impossible."
+    severity: serious
+    detected_by: [cart_mac_duplicate]
+    blind_spot: false
+    mitigation: "Physical inspection of the cart carrying the panel; audit
+                 the panel fleet MAC registry. Inference — confirm before act."
+
+  - id: rtls_location_spoof
+    name: "Location spoofing via crafted RSSI"
+    category: identity_spoofing
+    target: "Position integrity of a tracked device"
+    vector: "Feeding inconsistent signal so the engine computes an impossible
+             or attacker-chosen track."
+    store_context: "Positions here are already a distribution resolved by
+                    elimination; a sustained over-speed run of fixes reads as
+                    impossible motion rather than a believable path."
+    severity: warn
+    detected_by: [cart_impossible_motion]
+    blind_spot: false
+    mitigation: "Require sustained evidence (>=3 fixes) before acting;
+                 low-trust any flickering track."
+
+  - id: awips_throttle_blinding
+    name: "aWIPS throttle blinding"
+    category: wireless_rf
+    target: "Attack-intensity visibility"
+    vector: "Sustaining an attack above the aWIPS throttle so its true
+             magnitude never reaches the console."
+    store_context: "One message per signature per AP per interval means the
+                    suppressed volume is unrecoverable BY DESIGN — the stream
+                    reports that it happened, never how much."
+    severity: warn
+    detected_by: [deauth_flood]
+    blind_spot: true
+    blind_spot_reason: "Throttling destroys intensity; no alert may estimate it."
+    mitigation: "Alert on presence, never on magnitude; corroborate impact
+                 from client-side disconnect counts, not aWIPS."
+
+  - id: perimeter_inside_outside_evasion
+    name: "Inside/outside evasion at the perimeter"
+    category: surveillance_evasion
+    target: "Presence detection at the envelope"
+    vector: "Operating a device just outside the leased envelope where it is
+             heard by many interior sensors."
+    store_context: "A modem 8 m outside is heard by 41 sensors at -44 dBm;
+                    the 18 perimeter units do NOT separate inside from
+                    outside (CLAUDE.md §9)."
+    severity: warn
+    detected_by: []
+    blind_spot: true
+    blind_spot_reason: "RF alone cannot resolve inside vs outside; no feature
+                        assumes it does."
+    mitigation: "Corroborate presence with wired/entry-gate events; never
+                 build logic that trusts perimeter discrimination."
+
+  - id: cold_room_rf_shadow
+    name: "Hiding in a cold-room RF shadow"
+    category: surveillance_evasion
+    target: "Location coverage in back of house"
+    vector: "Positioning a device inside or directly behind a cold room,
+             whose steel is RF-opaque."
+    store_context: "Cold rooms are conductors (attenuation null = opaque),
+                    not lossy dielectrics; residual BOH blind cells sit in
+                    exactly these shadows even after reallocation."
+    severity: info
+    detected_by: [sensor_silent]
+    blind_spot: true
+    blind_spot_reason: "No placement reaches a metal shadow; a device there is
+                        simply unheard."
+    mitigation: "Physical/CCTV coverage of cold-room approaches; do not rely
+                 on RTLS in these cells."
+
+  - id: mac_randomization_evasion
+    name: "MAC-randomization tracking evasion"
+    category: surveillance_evasion
+    target: "Device continuity / probe tracking"
+    vector: "An unassociated device rotating randomized MACs so no stable
+             identity forms."
+    store_context: "Unassociated randomized MACs are dropped before the API
+                    and never reach the engine — probe counts are lower
+                    bounds, never a census."
+    severity: info
+    detected_by: [probe_surge_unassociated]
+    blind_spot: true
+    blind_spot_reason: "Randomized unassociated frames never reach the API."
+    mitigation: "Treat probe counts as lower bounds; watch for a correlated
+                 new BSSID rather than counting phones."
+
+  - id: station_to_station_covert
+    name: "Station-to-station covert channel"
+    category: surveillance_evasion
+    target: "Lateral comms between two clients"
+    vector: "Two associated clients exchanging data directly, invisible to
+             the infrastructure streams."
+    store_context: "Station-to-station traffic is reported by no stream here;
+                    the twin can see each endpoint but never the link."
+    severity: warn
+    detected_by: []
+    blind_spot: true
+    blind_spot_reason: "No stream reports station-to-station; structurally invisible."
+    mitigation: "Client isolation on the WLAN; the channel itself is not
+                 observable — prevent, do not detect."
+
+  - id: sensor_starvation
+    name: "Sensor starvation (knock a unit offline)"
+    category: surveillance_evasion
+    target: "Coverage of a chosen zone"
+    vector: "Removing a logical sensor from service (power/switch port) to
+             open a positioning gap."
+    store_context: "Each logical point is a PoE pair; losing one drops
+                    +2.5 dB diversity and, near the 3-AP edge, can push a
+                    cell below positionable — the sensor stops appearing in
+                    rssiRecords."
+    severity: warn
+    detected_by: [sensor_silent]
+    blind_spot: false
+    mitigation: "PoE budget + switch-port monitoring (802.3at); the silent-
+                 sensor alert flags disappearance; keep spares staged."
+
+  - id: exit_without_checkout
+    name: "Exit without checkout (shrink)"
+    category: loss_prevention
+    target: "Inventory shrink at the gates"
+    vector: "A cart leaving through an exit gate with no prior checkout
+             presence."
+    store_context: "Position is inferred, so absence of checkout presence may
+                    be a sensing gap rather than theft — the signal warns, it
+                    does not accuse."
+    severity: warn
+    detected_by: [exit_without_checkout]
+    blind_spot: false
+    mitigation: "Attendant check at the gate; corroborate with POS, never
+                 treat a single inference as proof."
