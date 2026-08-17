@@ -34,7 +34,31 @@ python scripts/build_coverage.py       # coverage report, all bands (~30 s)
 python -m viz.server                   # SIMULATION twin (ground truth) http://localhost:8787/
 python scripts/capture_observations.py # capture a Layer-2 stream (or use a real receiver sink)
 python -m viz.live_server              # LIVE view (Layer-3 inference only) http://localhost:8788/
+python scripts/run_attack.py --list    # attack the twin and watch DLAI react
+python scripts/run_attack.py --all     # every catalogue attack, end to end
 ```
+
+## Attacking the twin — watch DLAI work
+
+`scripts/run_attack.py` closes the loop: pick an attack from
+`config/attack_catalog.yaml`, inject it into the twin, and see exactly what
+Layer 3 does with it. Injection is faithful to each attack's nature and the
+runner prints the pipeline it traverses:
+
+- **`cart_mac_clone` runs the full physical stack** — the real `WorldSim`
+  (Layer 1) through the real sensing pipeline (Layer 2) locates an actual cart
+  panel, then the runner clones its MAC to a device 45 m away and Layer 3's
+  `cart_mac_duplicate` fires (`L1 world → L2 sensing → L3 DLAI`).
+- **Network / RF attacks** (rogue on wire, POS-VLAN bridge, evil twin, deauth,
+  containment, IP-camera pivot) are emitted as the Layer-2 security records
+  sensing produces, routed through the attack analyzer and alert engine.
+- **Blind-spot attacks** produce no detection — the runner shows the
+  catalogue's reason and the mitigation instead of faking one.
+
+Every emission carries its assessment, attack path, `confidence`
+(observed/inferred), listed blind spots, and a RECOMMEND_ONLY action — DLAI
+recommends, never enforces. `--all` runs all 23 classes and tallies how many
+drove DLAI live vs. how many are structural blind spots shown honestly.
 
 ## Two views: the simulation and the live branch
 
