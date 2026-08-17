@@ -1,5 +1,13 @@
 # Network design — Yochananof Centro Rehovot sensing fabric
 
+> **Current-state note.** This memo was written against the v0.2 baseline of
+> **150** logical positions. The live layout is now **153** (306 units): the
+> 8-unit perimeter→BOH reallocation is executed and 3 operator Meraki units
+> were added (`data/sensing_layer2.json`, v0.3). The regenerated channel plan
+> balances **52/51/50** across 1/6/11; PoE and switching scale to 306 units.
+> The design below is unchanged in method — read `data/channel_plan.json` and
+> the README coverage table for current numbers.
+
 Network/comms engineering companion to the digital twin. Every number in
 this document carries its provenance inline: a config path
 (`config/defaults.yaml`), a repo file, a generated artifact

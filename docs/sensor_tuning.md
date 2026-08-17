@@ -4,6 +4,13 @@ Scope: the CW9172I fleet (150 logical positions, pairs → 300 units) in the
 Yochananof Centro Rehovot twin. Everything quantitative below is produced by
 this repository's own physics; each number states its provenance.
 
+> **Status:** the reallocation proposed here is now **executed**
+> (`scripts/apply_reallocation.py`), and 3 operator Meraki units were added on
+> top (`scripts/add_sensors.py`), taking the live fleet to **153 logical / 306
+> units**. At 5 GHz this moved BOH ≥3-AP 66.9 → 74.8 → **80.7 %** and blind
+> 17.2 → 6.1 → **4.6 %**. The memo below is the analysis that produced the
+> proposal, against the 150 baseline.
+
 ## 1. The problem, with the real baseline numbers
 
 Back of house has 28 logical sensors over 2,218 m² (config
