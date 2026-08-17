@@ -23,7 +23,26 @@
     border-radius:999px;padding:2px 9px}
   .live::before{content:"● ";color:#ffd24d}
   header .tag{font-size:11px;color:var(--muted)}
+  header .roles{display:flex;gap:5px;margin-left:12px}
+  header .roles button{cursor:pointer;font:inherit;font-size:11px;color:var(--ink2);
+    background:transparent;border:1px solid var(--line);border-radius:999px;padding:2px 11px}
+  header .roles button:hover{border-color:var(--accent)}
+  header .roles button.on{background:var(--accent);color:#06101c;border-color:var(--accent);font-weight:700}
   header .clock{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--ink2)}
+  /* role-based screens: each role sees only the panels its job needs */
+  body[data-role="manager"] .engines,
+  body[data-role="manager"] #colAlerts,
+  body[data-role="manager"] .entities{display:none}
+  body[data-role="manager"] .grid{grid-template-columns:1fr}
+  body[data-role="network"] #colInc{display:none}
+  body[data-role="network"] .grid{grid-template-columns:1fr}
+  body[data-role="lp"] .engines{display:none}
+  /* manager brief incident card */
+  .inc.brief .chain,.inc.brief .pb{display:none}
+  .inc.brief .next{margin-top:7px;font-size:12.5px;color:var(--ink2)}
+  .inc.brief .next b{color:var(--accent);font-family:var(--mono);font-size:10px;
+    text-transform:uppercase;letter-spacing:.05em;margin-right:6px}
+  .rolehint{font-size:11px;color:var(--muted);padding:2px 6px}
   header .clock b{color:var(--good);font-variant-numeric:tabular-nums}
   header .src{font-family:var(--mono);font-size:11px;color:var(--muted);padding-left:14px}
   .stats{display:flex;border-bottom:1px solid var(--line);background:var(--panel2)}
@@ -106,19 +125,24 @@
 <div class="app">
   <header>
     <h1>DLAI WiFi</h1><span class="live">CONSOLE</span>
-    <span class="tag" id="mode">Layer-3 decision engine · no ground truth</span>
+    <div class="roles" id="roles">
+      <button data-role="security" class="on">Security (SOC)</button>
+      <button data-role="manager">Store manager</button>
+      <button data-role="network">Network / RF</button>
+      <button data-role="lp">Loss prevention</button>
+    </div>
     <span class="clock">stream clock <b id="clk">—</b> UTC</span>
     <span class="src" id="src"></span>
   </header>
   <div class="stats" id="stats"></div>
   <div class="engines" id="engines"></div>
   <div class="grid">
-    <div class="col">
-      <h2>Incident response <span class="cnt" id="inccnt"></span></h2>
+    <div class="col" id="colInc">
+      <h2 id="inchdr">Incident response <span class="cnt" id="inccnt"></span></h2>
       <div class="scroll" id="inclist"></div>
     </div>
-    <div class="col">
-      <h2>Alert stream <span class="cnt" id="alcnt"></span></h2>
+    <div class="col" id="colAlerts">
+      <h2 id="alhdr">Alert stream <span class="cnt" id="alcnt"></span></h2>
       <div class="scroll" id="allist"></div>
       <div class="inject">
         <div class="t">⚔ inject an attack — DLAI reacts &amp; orchestrates</div>
@@ -140,12 +164,40 @@
 <script>
 "use strict";
 const ALLST=["reconnaissance","initial-access","defense-evasion","lateral-movement","impact"];
+// role-based screens: each role's view is a filter over the same DLAI stream
+const CART_IDS=new Set(["cart_mac_duplicate","cart_impossible_motion","exit_without_checkout"]);
+const NET_IDS=new Set(["deauth_flood","containment_active_rtls_risk","sensor_silent"]);
+let ROLE="security", lastFrame=null;
+const ROLES={
+  security:{incidents:i=>i, alerts:a=>a, entities:t=>t, incMode:"full",
+            inchdr:"Incident response", alhdr:"Alert stream"},
+  manager:{incidents:i=>i, alerts:_=>[], entities:_=>[], incMode:"brief",
+           inchdr:"Decisions needed", alhdr:""},
+  network:{incidents:_=>[], alerts:a=>a.filter(x=>NET_IDS.has(x.alert_id)),
+           entities:t=>t, incMode:"full",
+           inchdr:"", alhdr:"RF / sensor alerts"},
+  lp:{incidents:i=>i.filter(x=>x.type==="asset_integrity"),
+      alerts:a=>a.filter(x=>CART_IDS.has(x.alert_id)),
+      entities:t=>t.filter(x=>x.mac.startsWith("0c:8b:7d")), incMode:"cart",
+      inchdr:"Cart &amp; shrink incidents", alhdr:"Cart alerts"},
+};
+function setRole(r){
+  ROLE=r; document.body.setAttribute("data-role", r);
+  document.querySelectorAll("#roles button").forEach(b=>b.classList.toggle("on", b.dataset.role===r));
+  const cfg=ROLES[r];
+  document.getElementById("inchdr").innerHTML = cfg.inchdr+' <span class="cnt" id="inccnt"></span>';
+  document.getElementById("alhdr").innerHTML = cfg.alhdr+' <span class="cnt" id="alcnt"></span>';
+  if(lastFrame) render(lastFrame);
+}
+document.getElementById("roles").addEventListener("click", e=>{
+  if(e.target.dataset && e.target.dataset.role) setRole(e.target.dataset.role);
+});
 const ENGINES=[["INGEST","ingest"],["RESOLVE","resolve"],["CLASSIFY","classify"],
   ["POLICY","policy"],["ATTACK","attack"],["ALERT","alert"],["ORCHESTRATE","orchestrate"]];
 const POLICY_IDS=new Set(["exit_without_checkout","position_flicker"]);
 
 fetch("scene.json").then(r=>r.json()).then(p=>{
-  document.getElementById("mode").textContent = p.mode || "Layer-3 decision engine";
+  const md=document.getElementById("mode"); if(md) md.textContent = p.mode || "Layer-3 decision engine";
   const box=document.getElementById("injbtns");
   for(const a of (p.injectable||[])){
     const b=document.createElement("button"); b.textContent=a.label;
@@ -176,23 +228,47 @@ function engines(counts){
     return arr+`<div class="eng${on?" on":""}"><span class="nm">${nm}</span><span class="v">${v}</span></div>`;
   }).join("");
 }
-function renderIncidents(incs){
-  document.getElementById("inccnt").textContent=incs.length?`${incs.length} open`:"";
+function renderIncidents(incs, mode){
+  const cnt=document.getElementById("inccnt"); if(cnt) cnt.textContent=incs.length?`${incs.length} open`:"";
   document.getElementById("inclist").innerHTML=incs.map(inc=>{
+    const head=`<div class="top"><span class="pri ${inc.priority}">${inc.priority}</span>`+
+      `<span class="ttl">${inc.title}</span><span class="rec">${inc.mode}</span></div>`;
+    if(mode==="brief"){
+      const step=(inc.playbook||[])[0];
+      const next=step?`<div class="next"><b>next</b>${step.action}</div>`:"";
+      return `<div class="inc brief">${head}`+
+        `<div class="subj">${inc.incident_id} · ${(inc.alert_ids||[]).length} alert(s)</div>${next}</div>`;
+    }
     const present=new Set((inc.kill_chain||[]).map(k=>k.stage));
     let chain="";
     ALLST.forEach((s,i)=>{ if(i) chain+=`<span class="ar${present.has(s)&&present.has(ALLST[i-1])?" on":""}">→</span>`;
       chain+=`<span class="st${present.has(s)?" on":""}">${s.replace('-',' ')}</span>`; });
     const pb=(inc.playbook||[]).map(x=>
       `<li><span class="ph">${x.phase}</span>${x.action}<span class="rat">${x.rationale}</span></li>`).join("");
-    return `<div class="inc"><div class="top"><span class="pri ${inc.priority}">${inc.priority}</span>`+
-      `<span class="ttl">${inc.title}</span><span class="rec">${inc.mode}</span></div>`+
+    return `<div class="inc">${head}`+
       `<div class="subj">${inc.incident_id} · ${(inc.subjects||[]).length} subject(s) · ${(inc.alert_ids||[]).length} alert(s)</div>`+
       `<div class="chain">${chain}</div><ol class="pb">${pb}</ol></div>`;
-  }).join("") || `<div class="empty">No incidents. Inject an attack or wait for the stream.</div>`;
+  }).join("") || `<div class="empty">Nothing for this role right now.</div>`;
+}
+function render(st){
+  lastFrame=st;
+  const cfg=ROLES[ROLE], s=st.stats||{};
+  const tracks=st.tracks||[], alerts=st.alerts||[], incs=st.incidents||[];
+  const located=tracks.filter(t=>t.located).length;
+  statTiles(s,alerts.length,incs.length,located);
+  engines({ingest:s.observations||0, resolve:s.positioned||0,
+    classify:tracks.filter(t=>t.interaction&&t.interaction!=="—").length,
+    policy:alerts.filter(a=>POLICY_IDS.has(a.alert_id)).length,
+    attack:alerts.filter(a=>!POLICY_IDS.has(a.alert_id)).length,
+    alert:alerts.length, orchestrate:incs.length});
+  renderIncidents(cfg.incidents(incs), cfg.incMode);
+  renderAlerts(cfg.alerts(alerts));
+  renderEntities(cfg.entities(tracks));
+  const clk=document.getElementById("clk"); if(clk) clk.textContent=fmtClock(s.stream_t_ms);
+  const src=document.getElementById("src"); if(src) src.textContent="source: "+((s.source||"stream").split("/").pop());
 }
 function renderAlerts(alerts){
-  document.getElementById("alcnt").textContent=alerts.length||"";
+  const c=document.getElementById("alcnt"); if(c) c.textContent=alerts.length||"";
   document.getElementById("allist").innerHTML=alerts.slice().reverse().map(a=>{
     const bs=(a.blind_spots&&a.blind_spots.length)?
       `<div class="blind"><b>blind:</b> ${a.blind_spots.join("; ")}</div>`:"";
@@ -203,7 +279,8 @@ function renderAlerts(alerts){
 }
 function renderEntities(tracks){
   const rows=tracks.slice().sort((a,b)=>(b.located?1:0)-(a.located?1:0)||a.mac.localeCompare(b.mac));
-  document.getElementById("entcnt").textContent=`${tracks.length} · ${tracks.filter(t=>t.located).length} located`;
+  const ec=document.getElementById("entcnt");
+  if(ec) ec.textContent=`${tracks.length} · ${tracks.filter(t=>t.located).length} located`;
   document.getElementById("entbody").innerHTML=rows.slice(0,60).map(t=>{
     if(!t.located) return `<tr><td>${t.mac}</td><td class="gap">${t.manufacturer||"—"}</td>`+
       `<td class="unl">unlocated</td><td>—</td><td class="unl">${t.n_aps}</td>`+
@@ -218,22 +295,10 @@ function renderEntities(tracks){
 }
 function connect(){
   const ws=new WebSocket((location.protocol==="https:"?"wss://":"ws://")+location.host+"/ws");
-  ws.onmessage=ev=>{
-    const st=JSON.parse(ev.data), s=st.stats||{}, tracks=st.tracks||[],
-      alerts=st.alerts||[], incs=st.incidents||[];
-    const located=tracks.filter(t=>t.located).length;
-    statTiles(s,alerts.length,incs.length,located);
-    engines({ingest:s.observations||0, resolve:s.positioned||0,
-      classify:tracks.filter(t=>t.interaction&&t.interaction!=="—").length,
-      policy:alerts.filter(a=>POLICY_IDS.has(a.alert_id)).length,
-      attack:alerts.filter(a=>!POLICY_IDS.has(a.alert_id)).length,
-      alert:alerts.length, orchestrate:incs.length});
-    renderIncidents(incs); renderAlerts(alerts); renderEntities(tracks);
-    document.getElementById("clk").textContent=fmtClock(s.stream_t_ms);
-    document.getElementById("src").textContent="source: "+((s.source||"stream").split("/").pop());
-  };
+  ws.onmessage=ev=>{ render(JSON.parse(ev.data)); };
   ws.onclose=()=>setTimeout(connect,1500);
 }
+setRole("security");
 connect();
 </script>
 </body>
