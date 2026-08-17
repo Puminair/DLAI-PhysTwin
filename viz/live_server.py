@@ -85,7 +85,8 @@ class LiveServer:
                 "scene": scene,
                 "panel_z_m": self.cfg.get("heights.cart_panel_z_m"),
                 "min_aps": self.cfg.get("rules.min_aps_for_position"),
-                "mode": "LIVE — Layer 3 inference, no ground truth",
+                "mode": "Layer-3 decision engine · consuming the sensing stream "
+                        "· no ground truth",
                 "injectable": [{"id": k, "label": v}
                                for k, v in self.INJECTABLE.items()],
             }).encode()
@@ -196,8 +197,14 @@ class LiveServer:
             ctype = "application/json"
         elif path == "/scene.json":
             body, ctype = self.scene_payload(), "application/json"
-        else:
+        elif path.startswith("/spatial"):
+            # the 3D inference view (positions in space) lives here now
             body = (Path(__file__).parent / "live.html").read_bytes()
+            ctype = "text/html; charset=utf-8"
+        else:
+            # DLAI WiFi is the decision CONSOLE by default — no 3D store,
+            # just the Layer-3 reasoning: incidents, orchestration, alerts
+            body = (Path(__file__).parent / "dlai_console.html").read_bytes()
             ctype = "text/html; charset=utf-8"
         writer.write((f"HTTP/1.1 200 OK\r\nContent-Type: {ctype}\r\n"
                       f"Content-Length: {len(body)}\r\n"
@@ -219,8 +226,9 @@ def ws_text_frame(text: str) -> bytes:
 async def amain(port: int, source: Path, speed: float):
     ls = LiveServer(source=source, speed=speed)
     server = await asyncio.start_server(ls.handle, "0.0.0.0", port)
-    print(f"LIVE view at http://localhost:{port}/  (source: {source.name}, "
-          f"Layer-3 inference only)")
+    print(f"DLAI WiFi console at http://localhost:{port}/  (decision engine — "
+          f"incidents, orchestration, alerts; source: {source.name})")
+    print(f"  3D inference view at http://localhost:{port}/spatial")
     async with server:
         await asyncio.gather(server.serve_forever(), ls.replay(),
                              ls.stream_state())

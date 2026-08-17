@@ -72,9 +72,16 @@ DLAI consumes them:
 python -m viz.server
 
 # Program 2 — DLAI WiFi (consumer): tails that stream in real time, runs
-# Layer 3, shows inferred tracks and live recommendations
+# Layer 3, and presents the DECISION CONSOLE
 python -m viz.live_server --source data/live_stream.jsonl
 ```
+
+The physical twin is the spatial view — the 3D store, sensors, coverage,
+cameras. **DLAI WiFi is the decision console** (`:8788/`): no 3D store, just the
+Layer-3 reasoning — the incident-response orchestration on the left (priority,
+kill-chain, playbook), the raw alert stream on the right, a live stat strip, and
+attack-injection buttons. (The 3D inference view is still available at
+`:8788/spatial` if you want positions in space.)
 
 Open both. In the physical twin (`:8787`) the **⚔ attack the twin** bar emits a
 catalogue attack to the stream; within a second the DLAI process (`:8788`)

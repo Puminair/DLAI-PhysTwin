@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DLAI WiFi Console</title>
+<style>
+  :root{
+    --bg:#0a0e14; --panel:#111925; --panel2:#0d141d; --line:#213042;
+    --ink:#e9eef7; --ink2:#b0bfd0; --muted:#7c8da0;
+    --accent:#4a97e8; --good:#35b56b; --warn:#e0a53e; --crit:#e85a5b;
+    --mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+    font-size:14px;-webkit-font-smoothing:antialiased;height:100vh;overflow:hidden}
+  .app{display:flex;flex-direction:column;height:100vh}
+  header{display:flex;align-items:center;gap:14px;padding:11px 18px;
+    border-bottom:1px solid var(--line);background:var(--panel2)}
+  header h1{font-size:15px;margin:0;font-weight:700;letter-spacing:.01em}
+  .live{font-family:var(--mono);font-size:11px;color:#fff;background:#c0304a;
+    border-radius:999px;padding:2px 9px}
+  .live::before{content:"● ";color:#ffd24d}
+  header .tag{font-size:11px;color:var(--muted)}
+  header .src{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .stats{display:flex;gap:0;border-bottom:1px solid var(--line);background:var(--panel2)}
+  .stat{padding:9px 18px;border-right:1px solid var(--line)}
+  .stat .n{font-family:var(--mono);font-size:19px;font-weight:600;font-variant-numeric:tabular-nums}
+  .stat .l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  .grid{display:grid;grid-template-columns:1.7fr 1fr;gap:0;flex:1;min-height:0}
+  .col{display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--line)}
+  .col:last-child{border-right:none}
+  .col h2{font-size:12px;margin:0;padding:10px 16px;color:var(--ink2);
+    text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid var(--line);
+    background:var(--panel2);position:sticky;top:0}
+  .col h2 .cnt{color:var(--muted);font-family:var(--mono);margin-left:6px}
+  .scroll{overflow-y:auto;padding:12px 14px;flex:1}
+  /* incidents */
+  .inc{border:1px solid var(--line);border-radius:9px;background:var(--panel);
+    padding:12px 13px;margin-bottom:12px}
+  .inc .top{display:flex;align-items:center;gap:9px}
+  .pri{font-family:var(--mono);font-size:11px;font-weight:800;color:#fff;
+    padding:2px 8px;border-radius:6px}
+  .P1{background:#c0304a}.P2{background:#d9662a}.P3{background:#c8961f}.P4{background:#465a70}
+  .inc .ttl{font-weight:700;font-size:14px}
+  .inc .rec{margin-left:auto;font-family:var(--mono);font-size:9.5px;color:#8fd0a0;
+    border:1px solid #2f5c40;border-radius:5px;padding:1px 6px}
+  .inc .subj{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin:5px 0 9px}
+  /* kill-chain stepper */
+  .chain{display:flex;align-items:center;gap:0;margin-bottom:11px;flex-wrap:wrap}
+  .chain .st{font-size:10px;color:var(--muted);background:var(--panel2);
+    border:1px solid var(--line);padding:3px 9px;border-radius:5px}
+  .chain .st.on{color:#1a1207;background:var(--warn);border-color:var(--warn);font-weight:700}
+  .chain .ar{color:var(--line);margin:0 5px;font-size:11px}
+  .chain .ar.on{color:var(--warn)}
+  /* playbook */
+  .pb{list-style:none;margin:0;padding:0;counter-reset:s}
+  .pb li{position:relative;padding:7px 0 7px 26px;border-top:1px solid var(--line);font-size:12.5px}
+  .pb li:first-child{border-top:none}
+  .pb li::before{counter-increment:s;content:counter(s);position:absolute;left:0;top:7px;
+    width:17px;height:17px;border-radius:50%;background:#22304a;color:#9fb4cf;
+    font-family:var(--mono);font-size:10px;font-weight:700;text-align:center;line-height:17px}
+  .pb .ph{font-family:var(--mono);color:var(--accent);font-weight:700;text-transform:uppercase;
+    font-size:9.5px;letter-spacing:.05em;margin-right:6px}
+  .pb .rat{display:block;color:var(--muted);font-size:11px;margin-top:2px}
+  .empty{color:var(--muted);font-size:12px;padding:8px}
+  /* alerts */
+  .al{border-left:3px solid var(--muted);background:var(--panel);border-radius:0 6px 6px 0;
+    padding:7px 10px;margin-bottom:7px}
+  .al.high{border-color:var(--crit)}.al.warn{border-color:var(--warn)}.al.info{border-color:var(--accent)}
+  .al .id{font-family:var(--mono);font-weight:700;font-size:12px}
+  .al .sev{font-family:var(--mono);font-size:10px;color:var(--muted);margin-left:6px}
+  .al .subj{font-family:var(--mono);font-size:10.5px;color:var(--accent)}
+  .al .act{color:var(--ink2);font-size:11.5px;margin-top:2px}
+  .al .conf{font-family:var(--mono);font-size:9.5px;color:var(--muted)}
+  /* inject */
+  .inject{border-top:1px solid var(--line);padding:10px 14px;background:var(--panel2)}
+  .inject .t{font-size:11px;color:#c98aa0;font-weight:600;margin-bottom:7px}
+  .inject .btns{display:flex;flex-wrap:wrap;gap:6px}
+  .inject button{cursor:pointer;font:inherit;font-size:11px;color:var(--ink);
+    background:#2a1c26;border:1px solid #6d3a52;border-radius:6px;padding:3px 10px}
+  .inject button:hover{background:#3a2634}
+  .inject button.flash{background:#c0304a;border-color:#c0304a}
+  /* entity table */
+  .etable{width:100%;border-collapse:collapse;font-size:11.5px}
+  .etable th{text-align:left;color:var(--muted);font-family:var(--mono);font-size:10px;
+    text-transform:uppercase;letter-spacing:.05em;padding:4px 8px;position:sticky;top:0;
+    background:var(--panel2)}
+  .etable td{padding:4px 8px;border-top:1px solid var(--line);font-family:var(--mono);
+    font-variant-numeric:tabular-nums}
+  .etable .loc{color:var(--good)}.etable .unl{color:var(--crit)}
+  .etable .flk{color:var(--warn)}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>DLAI WiFi</h1><span class="live">CONSOLE</span>
+    <span class="tag" id="mode">Layer-3 decision engine · consuming the sensing stream</span>
+    <span class="src" id="src"></span>
+  </header>
+  <div class="stats" id="stats"></div>
+  <div class="grid">
+    <div class="col">
+      <h2>Incident response <span class="cnt" id="inccnt"></span></h2>
+      <div class="scroll" id="inclist"></div>
+    </div>
+    <div class="col">
+      <h2>Alert stream <span class="cnt" id="alcnt"></span></h2>
+      <div class="scroll" id="allist"></div>
+      <div class="inject">
+        <div class="t">⚔ inject an attack — DLAI reacts &amp; orchestrates</div>
+        <div class="btns" id="injbtns"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+"use strict";
+const ALLST=["reconnaissance","initial-access","defense-evasion","lateral-movement","impact"];
+function scene(){
+  fetch("scene.json").then(r=>r.json()).then(p=>{
+    document.getElementById("mode").textContent = p.mode || "Layer-3 decision engine";
+    const box=document.getElementById("injbtns");
+    for(const a of (p.injectable||[])){
+      const b=document.createElement("button"); b.textContent=a.label;
+      b.onclick=()=>{ b.classList.add("flash"); setTimeout(()=>b.classList.remove("flash"),450);
+        fetch("inject?attack="+encodeURIComponent(a.id)).catch(()=>{}); };
+      box.appendChild(b);
+    }
+  });
+}
+scene();
+function statTiles(s, nAl, nInc, located){
+  const t=[["incidents",nInc],["alerts",nAl],["located",located],
+    ["batches",s.batches],["observations",s.observations],
+    ["positioned",`${s.positioned}/${s.positioned+s.no_position}`]];
+  document.getElementById("stats").innerHTML = t.map(([l,n])=>
+    `<div class="stat"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("");
+}
+function renderIncidents(incs){
+  document.getElementById("inccnt").textContent = incs.length?`${incs.length} open`:"";
+  const el=document.getElementById("inclist");
+  el.innerHTML = incs.map(inc=>{
+    const present=new Set((inc.kill_chain||[]).map(k=>k.stage));
+    let chain="";
+    ALLST.forEach((s,i)=>{
+      if(i) chain+=`<span class="ar${present.has(s)&&present.has(ALLST[i-1])?" on":""}">→</span>`;
+      chain+=`<span class="st${present.has(s)?" on":""}">${s.replace('-',' ')}</span>`;
+    });
+    const pb=(inc.playbook||[]).map(x=>
+      `<li><span class="ph">${x.phase}</span>${x.action}<span class="rat">${x.rationale}</span></li>`).join("");
+    return `<div class="inc"><div class="top">`+
+      `<span class="pri ${inc.priority}">${inc.priority}</span>`+
+      `<span class="ttl">${inc.title}</span><span class="rec">${inc.mode}</span></div>`+
+      `<div class="subj">${inc.incident_id} · ${(inc.subjects||[]).length} subject(s) · `+
+      `${(inc.alert_ids||[]).length} alert(s) · trigger: ${(inc.alert_ids||[]).slice(-1)[0]||""}</div>`+
+      `<div class="chain">${chain}</div><ol class="pb">${pb}</ol></div>`;
+  }).join("") || `<div class="empty">No incidents. Inject an attack, or wait for the sensing stream to raise one.</div>`;
+}
+function renderAlerts(alerts){
+  document.getElementById("alcnt").textContent = alerts.length?`${alerts.length}`:"";
+  const el=document.getElementById("allist");
+  el.innerHTML = alerts.slice().reverse().map(a=>
+    `<div class="al ${a.severity}"><span class="id">${a.alert_id}</span>`+
+    `<span class="sev">[${a.severity}]</span> <span class="conf">${a.confidence}</span><br>`+
+    `<span class="subj">${a.subject}</span><div class="act">${a.action}</div></div>`).join("")
+    || `<div class="empty">No recommendations yet.</div>`;
+}
+function connect(){
+  const ws=new WebSocket((location.protocol==="https:"?"wss://":"ws://")+location.host+"/ws");
+  ws.onmessage=ev=>{
+    const st=JSON.parse(ev.data);
+    const located=(st.tracks||[]).filter(t=>t.located).length;
+    statTiles(st.stats||{batches:0,observations:0,positioned:0,no_position:0},
+      (st.alerts||[]).length, (st.incidents||[]).length, located);
+    renderIncidents(st.incidents||[]);
+    renderAlerts(st.alerts||[]);
+    document.getElementById("src").textContent =
+      "source: "+((st.stats&&st.stats.source)||"stream").split("/").pop();
+  };
+  ws.onclose=()=>setTimeout(connect,1500);
+}
+connect();
+</script>
+</body>
+</html>
