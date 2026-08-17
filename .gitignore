@@ -3,3 +3,4 @@ __pycache__/
 .pytest_cache/
 data/capture_layer2.jsonl
 data/capture_layer2.meta.json
+data/live_stream.jsonl

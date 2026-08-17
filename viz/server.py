@@ -27,7 +27,9 @@ from pathlib import Path
 
 from config import load_config
 from eval.coverage import coverage_grid
+from sensing.pipeline import ObservationPipeline
 from sensing.sensor import SensorField, load_sensors
+from viz.dlai_runtime import INJECTABLE, attack_records
 from world.geometry import StoreGeometry
 from world.sim import WorldSim
 
@@ -52,6 +54,15 @@ class TwinServer:
         self.links: dict[str, list[dict]] = {}
         self.clients: set[asyncio.StreamWriter] = set()
         self._scene_cache: bytes | None = None
+        # The physical twin is a PRODUCER: it emits its Layer-2 sensing output
+        # (and any injected attack) to a live JSONL sink that a separate DLAI
+        # process (viz/live_server.py) tails in real time. Two programs, one
+        # observation stream between them — exactly a real deployment.
+        self.pipe = ObservationPipeline(field_=self.field, cfg=self.cfg)
+        self.sink_path = DATA / "live_stream.jsonl"
+        open(self.sink_path, "w", encoding="utf-8").close()   # fresh each run
+        self._written_batches = 0
+        self._inject_seq = 0
 
     # -- static payload ------------------------------------------------
     def scene_payload(self) -> bytes:
@@ -79,6 +90,8 @@ class TwinServer:
                 "panel_z_m": self.cfg.get("heights.cart_panel_z_m"),
                 "min_aps": self.cfg.get("rules.min_aps_for_position"),
                 "threshold_dbm": self.cfg.get("rules.location_threshold_dbm"),
+                "injectable": [{"id": k, "label": v}
+                               for k, v in INJECTABLE.items()],
             }).encode()
         return self._scene_cache
 
@@ -91,11 +104,42 @@ class TwinServer:
                 self._attacks_cache = json.dumps(yaml.safe_load(fh)).encode()
         return self._attacks_cache
 
+    def _append_sink(self, batch: dict) -> None:
+        with open(self.sink_path, "a", encoding="utf-8") as fh:
+            fh.write(json.dumps(batch) + "\n")
+
+    def inject(self, attack_id: str) -> int:
+        """Attack the twin: emit the attack's Layer-2 record(s) to the sink,
+        where the separate DLAI process picks them up. cart_mac_clone clones
+        an actual active cart's position from the world."""
+        if attack_id not in INJECTABLE:
+            return 0
+        self._inject_seq += 1
+        t_ms = self.sim.clock.now_ms() + self._inject_seq   # unique, ordered
+        active = [c for c in self.sim.snapshot()["carts"] if c["state"] != "docked"]
+        kw = {"x": active[0]["x"], "y": active[0]["y"]} if active else {}
+        recs = attack_records(attack_id, t_ms, **kw)
+        if recs:
+            self._append_sink({"deliveredAt": t_ms, "records": recs})
+        return len(recs)
+
     # -- simulation loops ----------------------------------------------
     async def run_sim(self):
         while True:
             self.sim.step(self.sim_dt_s * self.time_scale)
             await asyncio.sleep(self.sim_dt_s)
+
+    async def stream_to_sink(self):
+        """Emit the world's delivered Layer-2 batches to the live sink — the
+        physical twin POSTing its observations, like the real APs do."""
+        while True:
+            self.pipe.observe(self.sim.snapshot())
+            delivered = self.pipe.delivered
+            while self._written_batches < len(delivered):
+                self._append_sink(delivered[self._written_batches].to_json())
+                self._written_batches += 1
+                await asyncio.sleep(0)
+            await asyncio.sleep(1.0)
 
     async def refresh_links(self):
         eirp = self.cfg.get("cart_uplink.eirp_dbm")[self.band]
@@ -191,7 +235,15 @@ class TwinServer:
                 writer.close()
             return
 
-        if path == "/scene.json":
+        if path.startswith("/inject"):
+            qs = path.split("?", 1)[1] if "?" in path else ""
+            attack = dict(p.split("=", 1) for p in qs.split("&") if "=" in p
+                          ).get("attack", "")
+            n = self.inject(attack)
+            body = json.dumps({"attack": attack, "emitted": n,
+                               "note": "streamed to DLAI process"}).encode()
+            ctype = "application/json"
+        elif path == "/scene.json":
             body = self.scene_payload()
             ctype = "application/json"
         elif path == "/attacks.json":
@@ -221,9 +273,12 @@ async def amain(port: int, band: str):
     ts = TwinServer(band=band)
     server = await asyncio.start_server(ts.handle, "0.0.0.0", port)
     print(f"twin at http://localhost:{port}/  (band {band})")
+    print(f"streaming Layer-2 to {ts.sink_path.name} — run the DLAI with:")
+    print(f"  python -m viz.live_server --source {ts.sink_path}")
     async with server:
         await asyncio.gather(server.serve_forever(), ts.run_sim(),
-                             ts.refresh_links(), ts.stream_state())
+                             ts.refresh_links(), ts.stream_state(),
+                             ts.stream_to_sink())
 
 
 def main():

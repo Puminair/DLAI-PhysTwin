@@ -40,6 +40,17 @@
   #traffic canvas{display:block;width:100%;height:44px}
   #traffic .modes{display:flex;gap:6px;margin-top:8px;font-size:10px;color:var(--muted)}
   #traffic .modes span b{color:var(--ink2);font-variant-numeric:tabular-nums}
+  /* attack-the-twin control — emits to the separate DLAI process */
+  #injectbar{position:fixed;bottom:12px;left:50%;transform:translateX(-50%);z-index:4;
+    background:rgba(12,16,22,.93);border:1px solid #4a3a4a;border-radius:11px;
+    padding:8px 13px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+    box-shadow:0 8px 30px rgba(0,0,0,.5);max-width:82vw;justify-content:center}
+  #injectbar .lbl{font-size:11px;color:#c98aa0;font-weight:600;margin-right:2px}
+  #injectbar button{cursor:pointer;font:inherit;font-size:11px;color:#e8eef7;
+    background:#2a1c26;border:1px solid #6d3a52;border-radius:6px;padding:3px 9px}
+  #injectbar button:hover{background:#3a2634}
+  #injectbar button.flash{background:#c0304a;border-color:#c0304a}
+  #injectbar .hint{font-size:10px;color:#7d8ea0;width:100%;text-align:center;margin-top:1px}
   /* floating attack-surface window — draggable, defensive threat model */
   #attackwin{position:fixed;top:96px;left:360px;width:430px;max-height:80vh;z-index:5;
     display:none;flex-direction:column;background:rgba(12,16,22,.97);
@@ -145,6 +156,7 @@
   <div class="filters" id="atkfilters"></div>
   <div class="list" id="atklist"></div>
 </div>
+<div id="injectbar"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 "use strict";
@@ -320,6 +332,22 @@ fetch("scene.json").then(r=>r.json()).then(payload => {
   const nHeads = sc.sensors.reduce((a, s) => a + (s.units ?? 2), 0);
   document.getElementById("sensorCount").textContent =
     `${sc.sensors.length} logical points × 2 CW9172I units = ${nHeads} heads`;
+  // attack-the-twin buttons — each emits to the sink the DLAI process tails
+  const ib = document.getElementById("injectbar");
+  if((payload.injectable||[]).length){
+    ib.insertAdjacentHTML("beforeend", '<span class="lbl">⚔ attack the twin</span>');
+    for(const a of payload.injectable){
+      const b=document.createElement("button"); b.textContent=a.label;
+      b.onclick=()=>{
+        b.classList.add("flash"); setTimeout(()=>b.classList.remove("flash"),450);
+        fetch("inject?attack="+encodeURIComponent(a.id)).catch(()=>{});
+      };
+      ib.appendChild(b);
+    }
+    ib.insertAdjacentHTML("beforeend",
+      '<span class="hint">emits Layer-2 to the live stream — watch the DLAI '
+      +'process (viz/live_server) light up in real time</span>');
+  } else { ib.style.display="none"; }
   // cameras: a body at mount height + a nominal FOV wedge on the floor
   fusionData = payload.fusion;
   const camGeo = new THREE.BoxGeometry(0.5, 0.5, 0.35);

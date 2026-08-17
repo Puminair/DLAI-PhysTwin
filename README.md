@@ -60,6 +60,31 @@ Every emission carries its assessment, attack path, `confidence`
 recommends, never enforces. `--all` runs all 23 classes and tallies how many
 drove DLAI live vs. how many are structural blind spots shown honestly.
 
+## Two programs, one observation stream (real-time DLAI)
+
+The simulation and the DLAI are separate processes, connected exactly as a
+real deployment is — the sensing infrastructure emits observations, a separate
+DLAI consumes them:
+
+```bash
+# Program 1 — the physical twin (producer): world + sensing, streams its
+# Layer-2 output (and any injected attack) to data/live_stream.jsonl
+python -m viz.server
+
+# Program 2 — DLAI WiFi (consumer): tails that stream in real time, runs
+# Layer 3, shows inferred tracks and live recommendations
+python -m viz.live_server --source data/live_stream.jsonl
+```
+
+Open both. In the physical twin (`:8787`) the **⚔ attack the twin** bar emits a
+catalogue attack to the stream; within a second the DLAI process (`:8788`)
+lights up the matching recommendation. Verified end to end: inject
+`rogue_ap_on_pos_vlan` in the twin and the DLAI fires `rogue_ap_on_wire` +
+`rogue_ap_on_pos_vlan`; inject `cart_mac_clone` and it fires
+`cart_mac_duplicate`. The shared Layer-3 logic and the attack record shapes
+live once in `viz/dlai_runtime.py`, which imports only `dlai/` — so the DLAI
+process still holds no ground truth.
+
 ## Two views: the simulation and the live branch
 
 CLAUDE.md distinguishes the simulated world from *the live branch*, and both
