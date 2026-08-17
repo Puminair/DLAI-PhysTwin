@@ -18,6 +18,13 @@
   #alerts{position:fixed;top:10px;right:10px;width:330px;z-index:2;
     background:rgba(10,14,20,.88);border:1px solid #263042;border-radius:8px;padding:8px 10px}
   #alerts h2{font-size:12px;margin:0 0 6px;color:#e8eef7}
+  #inject{border-top:1px solid #263042;margin-top:10px;padding-top:9px}
+  #inject .t{font-size:11px;color:#8fa1b8;margin-bottom:6px}
+  #inject .btns{display:flex;flex-wrap:wrap;gap:5px}
+  #inject button{cursor:pointer;font:inherit;font-size:11px;color:#e8eef7;
+    background:#1c2740;border:1px solid #3a4c6d;border-radius:6px;padding:3px 9px}
+  #inject button:hover{background:#26365a}
+  #inject button.flash{background:#c0304a;border-color:#c0304a}
   .al{border-left:3px solid #555;padding:3px 6px;margin:3px 0;border-radius:3px;
     background:rgba(255,255,255,.03)}
   .al .id{font-weight:700}
@@ -40,7 +47,14 @@
   <label><input type="checkbox" id="t_plan"> plan view</label>
   <div id="stats">connecting…</div>
 </div>
-<div id="alerts"><h2>DLAI recommendations (RECOMMEND_ONLY)</h2><div id="alist"></div></div>
+<div id="alerts">
+  <h2>DLAI recommendations (RECOMMEND_ONLY)</h2>
+  <div id="alist"></div>
+  <div id="inject">
+    <div class="t">▶ inject an attack — watch DLAI react</div>
+    <div class="btns" id="injbtns"></div>
+  </div>
+</div>
 <div id="legend">
   <span class="inf">every position here is INFERRED</span> from Layer-2 observations —
   never a true location.<br>
@@ -136,6 +150,16 @@ fetch("scene.json").then(r=>r.json()).then(p => {
   for(const s of sc.sensors){
     const m=new THREE.Mesh(sGeo,sMat); m.position.set(s.x,s.y,s.z);
     layers.sensors.add(m); sensorPos.set(s.sensor_id,[s.x,s.y,s.z]);
+  }
+  // attack-injection buttons
+  const box=document.getElementById("injbtns");
+  for(const a of (p.injectable||[])){
+    const b=document.createElement("button"); b.textContent=a.label;
+    b.onclick=()=>{
+      b.classList.add("flash"); setTimeout(()=>b.classList.remove("flash"),450);
+      fetch("inject?attack="+encodeURIComponent(a.id)).catch(()=>{});
+    };
+    box.appendChild(b);
   }
 });
 

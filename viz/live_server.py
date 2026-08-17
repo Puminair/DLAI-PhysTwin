@@ -65,6 +65,7 @@ class LiveServer:
         self._scene_cache: bytes | None = None
         self.tracks: dict[str, dict] = {}          # mac -> latest fix payload
         self.recent_alerts: list[dict] = []
+        self._last_t_ms = 1_754_600_000_000        # advanced by each batch
         self.stats = {"batches": 0, "observations": 0, "positioned": 0,
                       "no_position": 0, "source": str(source), "live": True}
 
@@ -78,14 +79,18 @@ class LiveServer:
                 "panel_z_m": self.cfg.get("heights.cart_panel_z_m"),
                 "min_aps": self.cfg.get("rules.min_aps_for_position"),
                 "mode": "LIVE — Layer 3 inference, no ground truth",
+                "injectable": [{"id": k, "label": v}
+                               for k, v in self.INJECTABLE.items()],
             }).encode()
         return self._scene_cache
 
     # -- ingest one batch through Layer 3 ------------------------------
     def _ingest_batch(self, batch: dict) -> None:
         self.stats["batches"] += 1
+        self._last_t_ms = max(self._last_t_ms, batch.get("deliveredAt", 0))
         for obs in normalise_batch(batch):
             self.stats["observations"] += 1
+            self.alerts.consume_observation(obs)   # cart-duplicate / probe rules
             est = self.resolver.consume(obs)
             heard = [self.sites[m].sensor_id for m, _ in obs.rssi_dbm
                      if m in self.sites]
@@ -124,6 +129,74 @@ class LiveServer:
                 "subject": al.subject, "action": al.action,
                 "confidence": al.confidence})
         self.recent_alerts = self.recent_alerts[-12:]
+
+    # -- operator-injected attacks (the demo buttons) ------------------
+    # Records are built here as plain Layer-2 dicts — the same shapes
+    # sensing/ emits — so the live branch imports no world/ or sensing/.
+    INJECTABLE = {
+        "rogue_ap_on_wire": "Rogue AP on the wire",
+        "rogue_ap_on_pos_vlan": "Rogue on the POS VLAN",
+        "evil_twin_ops_ssid": "Evil twin of ops SSID",
+        "deauth_flood": "Deauth flood",
+        "containment_abuse": "Containment active",
+        "ip_camera_as_pivot": "IP-camera pivot",
+        "cart_mac_clone": "Cart MAC clone",
+    }
+
+    def _air_marshal(self, *, bssid, ssid, wired_macs, wired_vlans,
+                     contained=False, gaps=(), t_ms):
+        return {"stream": "air_marshal", "bssid": bssid, "ssid": ssid,
+                "channel": 6, "firstSeen": t_ms - 120_000, "lastSeen": t_ms,
+                "wiredMacs": list(wired_macs), "wiredVlans": list(wired_vlans),
+                "manufacturer": "injected", "encryption": "open",
+                "contained": contained, "confidence": "observed",
+                "gap": list(gaps)}
+
+    def _devices_seen(self, mac, x, y, t_ms):
+        return {"stream": "scanning_api_v3/DevicesSeen", "clientMac": mac,
+                "seenTime": t_ms, "manufacturer": "RetailPanel Ltd",
+                "locations": [{"x": x, "y": y, "variance": 6.0}],
+                "rssiRecords": [], "gap": []}
+
+    def inject(self, attack_id: str, t_ms: int) -> int:
+        """Inject one attack as a Layer-2 batch; return alerts fired now."""
+        recs = []
+        if attack_id == "rogue_ap_on_wire":
+            recs = [self._air_marshal(bssid="de:ad:be:ef:00:01", ssid="centro-ops",
+                    wired_macs=["00:50:56:aa:bb:cc"], wired_vlans=[99], t_ms=t_ms)]
+        elif attack_id == "rogue_ap_on_pos_vlan":
+            recs = [self._air_marshal(bssid="de:ad:be:ef:00:02", ssid="centro-ops",
+                    wired_macs=["00:50:56:aa:bb:cd"], wired_vlans=[12], t_ms=t_ms)]
+        elif attack_id == "evil_twin_ops_ssid":
+            recs = [self._air_marshal(bssid="a1:b2:c3:d4:e5:f6", ssid="centro-ops",
+                    wired_macs=[], wired_vlans=[], t_ms=t_ms)]
+        elif attack_id == "containment_abuse":
+            recs = [self._air_marshal(bssid="de:ad:be:ef:00:03", ssid="rogue-x",
+                    wired_macs=[], wired_vlans=[], contained=True,
+                    gaps=["containment_rtls_degraded"], t_ms=t_ms)]
+        elif attack_id == "ip_camera_as_pivot":
+            recs = [self._air_marshal(bssid="cc:cc:cc:00:00:01", ssid="centro-ops",
+                    wired_macs=["b8:a4:4f:11:22:33"], wired_vlans=[40], t_ms=t_ms)]
+        elif attack_id == "deauth_flood":
+            recs = [{"stream": "awips_syslog", "signature": "deauth_flood",
+                     "apMac": "00:2a:10:00:00:06", "t": t_ms,
+                     "confidence": "observed",
+                     "gap": ["no_client_identity", "awips_throttled"]}]
+        elif attack_id == "cart_mac_clone":
+            # clone a currently-located cart panel to 45 m away, same instant
+            victim = next((t for t in self.tracks.values()
+                           if t.get("located") and t["mac"].startswith("0c:8b:7d")),
+                          None)
+            mac = victim["mac"] if victim else "0c:8b:7d:00:00:99"
+            x = victim["x"] if victim else 20.0
+            y = victim["y"] if victim else 20.0
+            recs = [self._devices_seen(mac, x, y, t_ms),
+                    self._devices_seen(mac, x + 45.0, y, t_ms + 1000)]
+        else:
+            return 0
+        before = len(self.recent_alerts)
+        self._ingest_batch({"deliveredAt": t_ms, "records": recs})
+        return len(self.recent_alerts) - before
 
     # -- replay / tail the source, paced by deliveredAt ----------------
     async def replay(self):
@@ -219,7 +292,15 @@ class LiveServer:
                 writer.close()
             return
 
-        if path == "/scene.json":
+        if path.startswith("/inject"):
+            qs = path.split("?", 1)[1] if "?" in path else ""
+            attack = dict(p.split("=", 1) for p in qs.split("&") if "=" in p
+                          ).get("attack", "")
+            fired = self.inject(attack, self._last_t_ms + 2000) \
+                if attack in self.INJECTABLE else 0
+            body = json.dumps({"attack": attack, "alerts_fired": fired}).encode()
+            ctype = "application/json"
+        elif path == "/scene.json":
             body, ctype = self.scene_payload(), "application/json"
         else:
             body = (Path(__file__).parent / "live.html").read_bytes()

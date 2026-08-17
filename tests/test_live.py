@@ -69,6 +69,27 @@ def test_below_min_aps_is_unlocated_not_invented():
     assert "x" not in t
 
 
+def test_injected_rogue_fires_a_live_alert():
+    ls = LiveServer(source=DATA / "none.jsonl")
+    fired = ls.inject("rogue_ap_on_wire", t_ms=1_754_600_000_000)
+    assert fired >= 1, "injecting a rogue-on-wire produced no alert"
+    ids = {a["alert_id"] for a in ls.recent_alerts}
+    assert "rogue_ap_on_wire" in ids
+    assert all(a.get("confidence") for a in ls.recent_alerts)
+
+
+def test_injected_cart_clone_fires_duplicate():
+    ls = LiveServer(source=DATA / "none.jsonl")
+    ls.inject("cart_mac_clone", t_ms=1_754_600_000_000)
+    ids = {a["alert_id"] for a in ls.recent_alerts}
+    assert "cart_mac_duplicate" in ids
+
+
+def test_unknown_injection_is_a_noop():
+    ls = LiveServer(source=DATA / "none.jsonl")
+    assert ls.inject("not_an_attack", t_ms=1) == 0
+
+
 @pytest.mark.skipif(not (DATA / "capture_layer2.jsonl").exists(),
                     reason="run scripts/capture_observations.py first")
 def test_replay_capture_locates_cart_panels():

@@ -81,7 +81,11 @@ are here:
   the sensors hearing each device, and live DLAI recommendations. Every dot is
   labelled *inferred* — never a true location. This is the blind data path
   driving a live picture, which is the entire thesis: what can the store
-  actually know from its sensors, with the truth taken away.
+  actually know from its sensors, with the truth taken away. The alert panel
+  carries **attack-injection buttons** — click one (rogue on wire, POS-VLAN
+  bridge, evil twin, deauth, containment, IP-camera pivot, cart MAC clone) and
+  the DLAI recommendation lights up within the next frame, the same
+  Layer-2 → Layer-3 path `scripts/run_attack.py` drives from the console.
 
 ## Provenance of `data/`
 
