@@ -56,6 +56,30 @@ def test_world_never_imports_sensing_or_dlai():
     assert not offenders, f"Layer 1 mentions sensors: {offenders}"
 
 
+def test_attack_shapes_module_is_pure_layer2():
+    # viz/attack_shapes.py builds Layer-2 observation dicts and nothing more.
+    # It must import no world/, sensing/, or dlai/ code, so the physical-twin
+    # producer can emit injected attacks without touching any Layer-3 module.
+    offenders = [
+        mod for mod in _imports_of(ROOT / "viz" / "attack_shapes.py")
+        if mod.split(".")[0] in ("world", "sensing", "dlai")]
+    assert not offenders, f"attack_shapes reaches beyond Layer 2: {offenders}"
+
+
+def test_twin_producer_never_pulls_dlai_at_runtime():
+    # The two-program split: the twin (viz/server.py) is a Layer-1/2 producer
+    # that only EMITS observations. It must not transitively import dlai/, so
+    # the DLAI console can live in a separate repo the twin has no code from.
+    import importlib
+    import sys
+
+    for name in [m for m in list(sys.modules) if m.split(".")[0] == "dlai"]:
+        del sys.modules[name]
+    importlib.import_module("viz.server")
+    leaked = sorted(m for m in sys.modules if m.split(".")[0] == "dlai")
+    assert not leaked, f"twin producer pulled Layer-3 modules: {leaked}"
+
+
 def test_identity_trap_cart_entity_has_no_mac_field():
     # In Layer 1 a cart has cart_id — a fact. A MAC is an observation.
     # If they sit in the same record the separation has collapsed.

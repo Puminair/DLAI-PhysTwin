@@ -29,7 +29,7 @@ from config import load_config
 from eval.coverage import coverage_grid
 from sensing.pipeline import ObservationPipeline
 from sensing.sensor import SensorField, load_sensors
-from viz.dlai_runtime import INJECTABLE, attack_records
+from viz.attack_shapes import INJECTABLE, attack_records
 from world.geometry import StoreGeometry
 from world.sim import WorldSim
 
