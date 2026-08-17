@@ -83,7 +83,9 @@
   <label><input type="checkbox" id="t_checkout" checked> checkout</label>
   <label><input type="checkbox" id="t_docks" checked> docks</label>
   <label><input type="checkbox" id="t_sensors" checked> sensors</label>
+  <label><input type="checkbox" id="t_cameras"> cameras + FOV</label>
   <label><input type="checkbox" id="t_coverage" checked> coverage @ 1.00 m</label>
+  <label><input type="checkbox" id="t_fusion"> RF↔video fusion</label>
   <label><input type="checkbox" id="t_blind"> blind-only (&lt;3 AP)</label>
   <label><input type="checkbox" id="t_links" checked> links</label>
   <label><input type="checkbox" id="t_labels" checked> labels</label>
@@ -129,7 +131,11 @@
     <span><span style="color:#e0a353">●</span> leaving <b id="m_out">0</b></span>
   </div>
   <span style="color:#53b7e8">●●</span> <span id="sensorCount">…</span> @ 3.00 m
-  (+2.5 dB selection diversity).</div>
+  (+2.5 dB selection diversity).<br>
+  <span style="color:#e0b040">◣</span> cameras + FOV @ 1.20 m · RF↔video fusion:
+  <span style="color:#4bc46e">■</span> both · <span style="color:#3a87e5">■</span> RF only ·
+  <span style="color:#d98a26">■</span> video only · <span style="color:#ff5252">■</span> neither
+  (the dangerous cell).</div>
 <div id="attackwin">
   <header id="atkbar">
     <h2>Attack surface <small id="atksite"></small></h2>
@@ -207,8 +213,8 @@ renderer.domElement.addEventListener("contextmenu", e => e.preventDefault());
 // ---- layer groups
 const layers = {shell:new THREE.Group(), fixtures:new THREE.Group(),
   hard:new THREE.Group(), checkout:new THREE.Group(), docks:new THREE.Group(),
-  sensors:new THREE.Group(), coverage:new THREE.Group(), links:new THREE.Group(),
-  agents:new THREE.Group(), labels:new THREE.Group()};
+  sensors:new THREE.Group(), cameras:new THREE.Group(), coverage:new THREE.Group(),
+  links:new THREE.Group(), agents:new THREE.Group(), labels:new THREE.Group()};
 Object.values(layers).forEach(g => world.add(g));
 
 // billboard text labels for zones and points of interest
@@ -262,7 +268,7 @@ function boxFromRing(ring, z0, z1, color, opacity){
   return m;
 }
 
-let coverageData = null, panelZ = 1.0, minAps = 3;
+let coverageData = null, fusionData = null, panelZ = 1.0, minAps = 3;
 const carts = new Map(), shoppers = new Map(), sensorPos = new Map();
 
 fetch("scene.json").then(r=>r.json()).then(payload => {
@@ -314,6 +320,38 @@ fetch("scene.json").then(r=>r.json()).then(payload => {
   const nHeads = sc.sensors.reduce((a, s) => a + (s.units ?? 2), 0);
   document.getElementById("sensorCount").textContent =
     `${sc.sensors.length} logical points × 2 CW9172I units = ${nHeads} heads`;
+  // cameras: a body at mount height + a nominal FOV wedge on the floor
+  fusionData = payload.fusion;
+  const camGeo = new THREE.BoxGeometry(0.5, 0.5, 0.35);
+  const camMat = new THREE.MeshLambertMaterial({color:0xe0b040});
+  const CAMCOL = {dome:0xe0b040, bullet:0xe08840, ptz:0xe05070};
+  for(const c of (sc.cameras || [])){
+    const b = new THREE.Mesh(camGeo, camMat); b.position.set(c.x, c.y, c.z);
+    layers.cameras.add(b);
+    // wedge at target height 1.2 m
+    const tz = 1.2, R = c.range_m, half = c.fov_deg*Math.PI/360;
+    const yaw = c.yaw_deg*Math.PI/180, N = 14;
+    const pos = [c.x, c.y, tz], idx = [];
+    for(let i=0;i<=N;i++){
+      const a = yaw - half + (2*half)*i/N;
+      pos.push(c.x + R*Math.cos(a), c.y + R*Math.sin(a), tz);
+    }
+    for(let i=1;i<=N;i++) idx.push(0, i, i+1);
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.Float32BufferAttribute(pos,3));
+    g.setIndex(idx);
+    const col = CAMCOL[c.model] ?? 0xe0b040;
+    layers.cameras.add(new THREE.Mesh(g, new THREE.MeshBasicMaterial(
+      {color:col, transparent:true, opacity:0.10, side:THREE.DoubleSide, depthWrite:false})));
+    // wedge outline
+    const ol = [new THREE.Vector3(c.x,c.y,tz)];
+    for(let i=0;i<=N;i++){ const a=yaw-half+(2*half)*i/N;
+      ol.push(new THREE.Vector3(c.x+R*Math.cos(a), c.y+R*Math.sin(a), tz)); }
+    ol.push(new THREE.Vector3(c.x,c.y,tz));
+    layers.cameras.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(ol),
+      new THREE.LineBasicMaterial({color:col, transparent:true, opacity:0.35})));
+  }
+  layers.cameras.visible = false;
   const sel = document.getElementById("bandSel");
   for(const b of Object.keys(coverageData)){
     const o = document.createElement("option"); o.value=b; o.textContent=b+" GHz";
@@ -326,20 +364,28 @@ fetch("scene.json").then(r=>r.json()).then(payload => {
   buildCoverage();
 });
 
+const FUSCOL = {both:[0.16,0.68,0.30], rf_only:[0.22,0.53,0.90],
+  video_only:[0.85,0.53,0.15], neither:[1.0,0.16,0.16]};
 function buildCoverage(){
   layers.coverage.clear();
+  const fusion = document.getElementById("t_fusion").checked && fusionData;
   const band = document.getElementById("bandSel").value;
   const blindOnly = document.getElementById("t_blind").checked;
-  const cov = coverageData?.[band]; if(!cov) return;
-  // one merged mesh of cell-sized quads at panel height — far clearer
-  // than a point cloud, and the grid itself reads as the analysis plane
-  const h = (cov.cell_m ?? 2) / 2 - 0.12;
+  const src = fusion ? fusionData : coverageData?.[band];
+  if(!src) return;
+  const h = (src.cell_m ?? 2) / 2 - 0.12;
   const pos = [], colr = [], idx = [];
   let v = 0;
-  for(const c of cov.cells){
-    if(blindOnly && c.n_aps >= minAps) continue;
-    const col = c.n_aps >= minAps ? [0.16,0.68,0.30]
-             : c.n_aps > 0 ? [0.95,0.72,0.18] : [1.0,0.16,0.16];
+  for(const c of src.cells){
+    let col;
+    if(fusion){
+      if(blindOnly && c.class !== "neither") continue;
+      col = FUSCOL[c.class] || [0.5,0.5,0.5];
+    } else {
+      if(blindOnly && c.n_aps >= minAps) continue;
+      col = c.n_aps >= minAps ? [0.16,0.68,0.30]
+          : c.n_aps > 0 ? [0.95,0.72,0.18] : [1.0,0.16,0.16];
+    }
     pos.push(c.x-h, c.y-h, panelZ,  c.x+h, c.y-h, panelZ,
              c.x+h, c.y+h, panelZ,  c.x-h, c.y+h, panelZ);
     for(let k=0;k<4;k++) colr.push(...col);
@@ -359,11 +405,12 @@ document.getElementById("t_blind").addEventListener("change", buildCoverage);
 // ---- toggles
 const map = {t_shell:"shell", t_fixtures:"fixtures", t_hard:"hard",
   t_checkout:"checkout", t_docks:"docks", t_sensors:"sensors",
-  t_coverage:"coverage", t_links:"links", t_labels:"labels"};
+  t_cameras:"cameras", t_coverage:"coverage", t_links:"links", t_labels:"labels"};
 for(const [id, layer] of Object.entries(map)){
   document.getElementById(id).addEventListener("change",
     e => layers[layer].visible = e.target.checked);
 }
+document.getElementById("t_fusion").addEventListener("change", buildCoverage);
 document.getElementById("t_plan").addEventListener("change", e => {
   if(e.target.checked){ planSaved = {...sph}; sph = {r:80, theta:-Math.PI/2, phi:0.06}; }
   else if(planSaved){ sph = planSaved; }

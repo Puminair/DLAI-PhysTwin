@@ -67,9 +67,15 @@ class TwinServer:
                       "(run scripts/build_coverage.py for all bands)...")
                 coverage = {self.band: coverage_grid(self.field, self.cfg,
                                                      self.band)}
+            fusion = None
+            fus_path = DATA / "fusion_report.json"
+            if fus_path.exists():
+                with open(fus_path, "r", encoding="utf-8") as fh:
+                    fusion = json.load(fh)
             self._scene_cache = json.dumps({
                 "scene": scene,
                 "coverage": coverage,
+                "fusion": fusion,
                 "panel_z_m": self.cfg.get("heights.cart_panel_z_m"),
                 "min_aps": self.cfg.get("rules.min_aps_for_position"),
                 "threshold_dbm": self.cfg.get("rules.location_threshold_dbm"),

@@ -26,6 +26,7 @@ categories:
   identity_spoofing: "Forged device identity / location"
   surveillance_evasion: "Moving or hiding beneath the sensing floor"
   loss_prevention:   "Physical shrink visible only through inference"
+  video_system:      "Attacks on or through the CCTV/NVR subsystem"
 
 attacks:
   - id: rogue_ap_on_wire
@@ -257,3 +258,153 @@ attacks:
     blind_spot: false
     mitigation: "Attendant check at the gate; corroborate with POS, never
                  treat a single inference as proof."
+
+  # --- video_system -------------------------------------------------------
+  # The CCTV/NVR subsystem is being added as Layer-1 entities with a Layer-2
+  # video-coverage model. THE KEY HONESTY: this is a Wi-Fi/RF sensing twin
+  # with NO video analytics, so most camera attacks are STRUCTURAL BLIND
+  # SPOTS here — the RF twin literally cannot see them and mitigation lives
+  # on the VMS/NVR/network side. The one bridge is the wire: IP cameras and
+  # their NVR share PoE and switching with the CW9172I fleet, so a
+  # camera-subnet attack that presents an unauthorized AP/bridge ON THE WIRE
+  # can surface through rogue_ap_on_wire — but a camera is not a Wi-Fi AP, so
+  # that detection is claimed ONLY where a wire-side bridge genuinely appears.
+
+  - id: rtsp_onvif_hijack
+    name: "RTSP/ONVIF camera stream or credential hijack"
+    category: video_system
+    target: "IP camera streams / ONVIF credentials"
+    vector: "Taking over a camera's RTSP/ONVIF interface with default or
+             captured credentials to view, redirect or stop its stream."
+    store_context: "Cameras share PoE and switching infrastructure with the
+                    ~300 CW9172I units but ride the VMS, not the WLAN; the RF
+                    twin ingests no video and sees nothing of a stream takeover."
+    severity: serious
+    detected_by: []
+    blind_spot: true
+    blind_spot_reason: "No video analytics in this twin; a stream/credential
+                        hijack is visible only VMS/NVR-side, never to RF sensing."
+    mitigation: "Rotate ONVIF/RTSP credentials off defaults, isolate the camera
+                 VLAN, and monitor session integrity on the VMS. Recommend-only."
+
+  - id: camera_blinding_or_tamper
+    name: "Camera blinding, obstruction or repositioning"
+    category: video_system
+    target: "Physical field of view of a camera"
+    vector: "IR-flooding, lens obstruction, spray or physically re-aiming a
+             camera to remove coverage of an area."
+    store_context: "Blinding a lens is a purely optical act; the RF fabric
+                    carries no signal about what a camera can or cannot see, so
+                    this twin cannot register the loss of a field of view."
+    severity: serious
+    detected_by: []
+    blind_spot: true
+    blind_spot_reason: "No video analytics; loss of a camera's field of view is
+                        detectable only by VMS tamper/health monitoring."
+    mitigation: "Enable NVR/VMS camera-tamper and video-loss detection; review
+                 mounts and IR exposure on a maintenance loop. Recommend-only."
+
+  - id: video_loop_injection
+    name: "Video loop / freeze injection"
+    category: video_system
+    target: "Integrity of a recorded or live feed"
+    vector: "Replaying or freezing a camera feed so the operator sees a benign
+             loop while activity proceeds off-frame."
+    store_context: "This twin correlates RF tracks, not pixels; a looped feed is
+                    indistinguishable from a live one to a system that never
+                    ingests the video at all."
+    severity: serious
+    detected_by: []
+    blind_spot: true
+    blind_spot_reason: "No video analytics; feed replay/freeze is a VMS-integrity
+                        problem the RF twin has no channel to observe."
+    mitigation: "Signed/timestamped video, NVR write-integrity checks and
+                 frame-continuity monitoring on the VMS side. Recommend-only."
+
+  - id: ip_camera_as_pivot
+    name: "Compromised PoE IP camera used as a network pivot"
+    category: video_system
+    target: "Adjacent VLANs reachable from the camera subnet"
+    vector: "Using a compromised IP camera as a foothold to reach other
+             segments; detection depends entirely on whether the pivot presents
+             an unauthorized AP/bridge on the wire."
+    store_context: "Cameras and the ~300 CW9172I sensors share PoE and switching;
+                    a pivot that stands up a rogue bridge/AP on the wire crosses
+                    into the ONE camera vector this twin can actually see."
+    severity: critical
+    detected_by: [rogue_ap_on_wire]
+    blind_spot: false
+    mitigation: "Segment the camera VLAN from POS/ops, wire-side port security,
+                 and 802.1X on camera drops; the on-wire alert fires only if a
+                 bridge/AP appears — quiet host-to-host pivoting stays invisible."
+
+  - id: ip_camera_silent_pivot
+    name: "Silent camera pivot with no wire-side AP"
+    category: video_system
+    target: "Adjacent hosts reachable from the camera subnet"
+    vector: "A compromised camera reaching neighbouring hosts purely as an
+             end host, standing up no bridge or access point on the wire."
+    store_context: "Without a rogue AP/bridge on the wire there is no Air Marshal
+                    wiredMacs signature; a camera behaving as an ordinary host on
+                    its own subnet raises nothing in this RF twin."
+    severity: serious
+    detected_by: []
+    blind_spot: true
+    blind_spot_reason: "No video analytics and no wire-side AP to catch; a camera
+                        is not a Wi-Fi AP, so silent host pivoting is NVR/network-
+                        side (NDR/segmentation) only, invisible to RF sensing."
+    mitigation: "East-west segmentation and NDR on the camera VLAN; do not expect
+                 the wired rogue-AP alert to fire without an actual bridge."
+
+  - id: nvr_credential_compromise
+    name: "NVR / VMS credential compromise"
+    category: video_system
+    target: "Central recorder and camera management plane"
+    vector: "Gaining administrative access to the NVR/VMS to delete footage,
+             disable cameras or alter retention."
+    store_context: "The NVR is a wired appliance beside the CW9172I switching but
+                    outside every RF stream; its console is governed by the VMS,
+                    which this twin does not ingest."
+    severity: critical
+    detected_by: []
+    blind_spot: true
+    blind_spot_reason: "No video analytics; NVR/VMS console compromise is only
+                        visible in VMS audit logs, never through RF sensing."
+    mitigation: "MFA and least-privilege on the NVR/VMS, off-box tamper-evident
+                 retention, and admin-session audit alarms. Recommend-only."
+
+  - id: video_blindspot_exploitation
+    name: "Movement through a known video dead zone"
+    category: video_system
+    target: "Areas outside any camera's field of view"
+    vector: "Routing physical movement through a mapped CCTV dead zone to avoid
+             being recorded."
+    store_context: "Camera dead zones and RF dead cells are not the same map;
+                    cold-room approaches and thin-density BOH already lack RF, and
+                    if they also lack a camera the twin sees the actor in neither."
+    severity: warn
+    detected_by: []
+    blind_spot: true
+    blind_spot_reason: "No video analytics to map or watch camera dead zones;
+                        coverage-fusion planning is a VMS + site-survey task."
+    mitigation: "Fuse RF and video coverage maps to close dead zones by design —
+                 place a camera where RF is blind and vice versa. Recommend-only."
+
+  - id: rf_video_desync
+    name: "Acting in a cell that is both RF-blind and video-blind"
+    category: video_system
+    target: "The fusion gap — neither sensing modality covers the cell"
+    vector: "Operating in the intersection of an RF dead cell and a camera dead
+             zone, where no modality can corroborate presence."
+    store_context: "This is the most dangerous fusion cell: the whole value of
+                    adding video is that video covers RF gaps and RF covers video
+                    gaps, so the 'neither' cell is the one both maps must be built
+                    to eliminate — a metal-shadow BOH corner with no camera."
+    severity: serious
+    detected_by: []
+    blind_spot: true
+    blind_spot_reason: "By definition neither RF nor video observes this cell, and
+                        this twin has no video analytics to even flag the overlap."
+    mitigation: "Treat RF-blind cells as camera-placement priorities during the
+                 coverage-fusion pass; enumerate and physically walk any residual
+                 neither-cell. Recommend-only, planning-time control."

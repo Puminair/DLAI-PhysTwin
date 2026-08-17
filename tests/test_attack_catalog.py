@@ -68,6 +68,27 @@ def test_catalogue_covers_the_documented_blind_spots():
         assert needed in blind, f"documented blind spot {needed} not catalogued"
 
 
+def test_video_system_camera_attacks_are_honest_blind_spots():
+    # The CCTV/NVR subsystem is catalogued, but this is a Wi-Fi/RF twin with
+    # NO video analytics: most camera attacks MUST be blind spots, and every
+    # blind one must point at the VMS/NVR/video side rather than fake an
+    # RF detection the twin cannot perform.
+    cat = _load("attack_catalog.yaml")
+    assert "video_system" in cat["categories"], "video_system category missing"
+    video = [a for a in cat["attacks"] if a["category"] == "video_system"]
+    assert len(video) >= 5, f"only {len(video)} video_system attacks catalogued"
+    for a in video:
+        if a["blind_spot"]:
+            reason = (a.get("blind_spot_reason") or "").lower()
+            assert any(term in reason for term in ("video", "vms", "nvr")), (
+                f"{a['id']} is a camera blind spot but its reason does not name "
+                "the video/VMS/NVR side — do not fake an RF detection")
+        else:
+            # a non-blind camera attack must earn its detection via a real
+            # wire-side signal, not a hand-wave
+            assert a["detected_by"], f"{a['id']} claims detectable but names no alert"
+
+
 def test_posture_is_recommend_only():
     cat = _load("attack_catalog.yaml")
     assert cat["meta"]["posture"] == "RECOMMEND_ONLY"

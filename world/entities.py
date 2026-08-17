@@ -101,3 +101,25 @@ class Product:
     id: str
     provenance: str
     gondola_id: str = ""
+
+
+@dataclass
+class Camera:
+    """A CCTV camera — a physical fixture in the world (Layer 1 fact).
+
+    Its placement, aim and reach are world facts; what it can actually
+    *see* (its occluded footprint) is a Layer-2 sensing question, exactly
+    as an RF sensor's position is a fact but its coverage is not. Like
+    every entity it carries no observation identity — no stream URL, no
+    credentials; those belong to the video subsystem, not the world.
+    """
+    id: str
+    provenance: str
+    x: float = 0.0
+    y: float = 0.0
+    z: float = 3.20
+    model: str = "dome"          # dome | bullet | ptz
+    yaw_deg: float = 0.0         # aim azimuth: 0 = +x (east), CCW
+    fov_deg: float = 100.0       # horizontal field of view
+    range_m: float = 12.0        # useful identification range
+    zone: str = "sales_floor"

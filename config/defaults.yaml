@@ -98,3 +98,24 @@ pipeline:                    # assumed — Scanning API v3 behaviour
 reflections:                 # assumed — first-order image method
   fresnel_loss_db_normal: 3.0      # steel gondola back at normal incidence
   enabled_bands: ["5", "6"]        # measured effect zero at 2.4 — skip there
+
+cameras:                     # assumed — parametric CCTV fit-out, not a survey
+  mount_z_m: 3.20            # just above the RF sensors (3.00 m)
+  models:                   # horizontal FOV (deg) and useful identification range (m)
+    dome: {fov_deg: 100.0, range_m: 12.0}    # interior wide-area
+    bullet: {fov_deg: 60.0, range_m: 18.0}   # aisle / perimeter, longer reach
+    ptz: {fov_deg: 75.0, range_m: 22.0}      # entrance / checkout overview
+  # counts per zone (derived from a plausible retail CCTV density ~1 per 90 m2)
+  sales_domes: 20
+  aisle_bullets: 10
+  boh_domes: 12
+  dock_bullets: 4
+  entrance_ptz: 2
+  checkout_bullets: 6
+
+vision:                      # assumed — video line-of-sight coverage model
+  target_z_m: 1.20           # the plane scored: mid-body / cart contents
+  # light is fully blocked by any solid fixture (unlike RF, which attenuates).
+  occluders: [gondola, endcap, promo_pallet, produce_table, column, cold_room,
+              racking, chiller, wall, room]
+  min_cameras_identify: 1    # one clear view identifies; 2+ is robust

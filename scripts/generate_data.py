@@ -280,6 +280,94 @@ def build_sensors(cfg, env_ring) -> dict:
     }
 
 
+def build_cameras(cfg, env_ring) -> dict:
+    """Parametric CCTV fit-out: domes, aisle bullets, dock/entrance/checkout.
+
+    Each camera is aimed at a sensible target so its wedge covers real
+    floor; the video sensing model in sensing/vision.py then clips that
+    wedge by occlusion. Counts and optics are `assumed` (config)."""
+    cam_cfg = cfg.section("cameras")
+    g = cfg.section("geometry")
+    x_split = cfg.get("areas.x_split_m")
+    mount_z = cam_cfg["mount_z_m"]
+    models = cam_cfg["models"]
+    cams: list[dict] = []
+
+    def aim(x, y, tx, ty) -> float:
+        return round(math.degrees(math.atan2(ty - y, tx - x)), 1)
+
+    def add(model, zone, x, y, tx, ty):
+        m = models[model]
+        cams.append({
+            "camera_id": f"C{len(cams):03d}",
+            "x": round(x, 2), "y": round(y, 2), "z": mount_z,
+            "model": model, "yaw_deg": aim(x, y, tx, ty),
+            "fov_deg": m["fov_deg"], "range_m": m["range_m"], "zone": zone,
+        })
+
+    def grid(x0, x1, y0, y1, n):
+        area = (x1 - x0) * (y1 - y0)
+        pitch = math.sqrt(area / max(1, n))
+        while True:
+            nx, ny = max(1, int((x1 - x0) / pitch)), max(1, int((y1 - y0) / pitch))
+            pts = [(x0 + (i + 0.5) * (x1 - x0) / nx, y0 + (j + 0.5) * (y1 - y0) / ny)
+                   for j in range(ny) for i in range(nx)
+                   if point_in_ring(x0 + (i + 0.5) * (x1 - x0) / nx,
+                                    y0 + (j + 0.5) * (y1 - y0) / ny, env_ring)]
+            if len(pts) >= n or pitch < 1.0:
+                break
+            pitch *= 0.95
+        return pts[:n]
+
+    # sales-floor domes ON the aisle centrelines, aimed ALONG the run — a
+    # camera looking down an aisle sees the whole aisle (no shelving in it);
+    # aimed across, gondolas block it. Two per aisle, covering each half.
+    y0, run, x0a = g["aisle_y_start_m"], g["aisle_run_m"], g["aisle_x_start_m"]
+    per_aisle = max(1, cam_cfg["sales_domes"] // g["aisles"])
+    for a in range(g["aisles"]):
+        ay = y0 + a * g["aisle_pitch_m"]
+        for j in range(per_aisle):
+            # place at 1/4 and 3/4 of the run, each aimed outward to its end
+            frac = (j + 0.5) / per_aisle
+            cx = x0a + frac * run
+            tx = x0a - 5 if frac < 0.5 else x0a + run + 5
+            add("dome", "sales_floor", cx, ay, tx, ay)
+    # aisle bullets at the ends of the remaining aisles, looking down the run
+    for k in range(cam_cfg["aisle_bullets"]):
+        ay = y0 + (k % g["aisles"]) * g["aisle_pitch_m"]
+        east = k % 2 == 0
+        cx = (x0a - 1.0) if east else (x0a + run + 1.0)
+        add("bullet", "sales_floor", cx, ay, cx + (12 if east else -12), ay)
+    # back-of-house domes along the open corridors (aimed along +x), spread in y
+    ny = max(1, cam_cfg["boh_domes"] // 3)
+    for a in range(cam_cfg["boh_domes"]):
+        row = a % ny
+        col = a // ny
+        by = 6.0 + row * (46.0 / max(1, ny - 1)) if ny > 1 else 27.0
+        bx = x_split + 4.0 + col * 9.0
+        add("dome", "back_of_house", bx, by, bx + 8, by)
+    # dock bullets aimed west into the warehouse
+    for k in range(cam_cfg["dock_bullets"]):
+        cy = 33.0 + k * 6.0
+        add("bullet", "warehouse", 98.0, cy, 80.0, cy)
+    # entrance PTZ over the south doors
+    for k, dx in enumerate((10.0, 18.0)[:cam_cfg["entrance_ptz"]]):
+        add("ptz", "sales_floor", dx, 4.0, dx, -2.0)
+    # checkout bullets over the west-wall lanes, aimed at the lane line
+    for k in range(cam_cfg["checkout_bullets"]):
+        cy = 6.0 + k * 6.6
+        add("bullet", "sales_floor", 6.5, cy, 2.5, cy)
+
+    return {
+        "provenance": provenance(
+            f"{len(cams)} cameras: parametric CCTV fit-out, not a survey; "
+            "optics and counts are assumed"),
+        "mount_z_m": mount_z,
+        "target_z_m": cfg.get("vision.target_z_m"),
+        "cameras": cams,
+    }
+
+
 def build_scene3d(layer1: dict, sensors: dict, cfg) -> dict:
     solids = []
     for f in layer1["features"]:
@@ -435,7 +523,9 @@ def main() -> None:
 
     layer1 = build_layer1(cfg)
     sensors = build_sensors(cfg, env_ring)
+    cameras = build_cameras(cfg, env_ring)
     scene3d = build_scene3d(layer1, sensors, cfg)
+    scene3d["cameras"] = cameras["cameras"]
 
     def dump(name: str, obj: dict):
         with open(out / name, "w", encoding="utf-8") as fh:
@@ -444,6 +534,7 @@ def main() -> None:
 
     dump("store_layer1.geojson", layer1)
     dump("sensing_layer2.json", sensors)
+    dump("cameras.json", cameras)
     dump("store_scene3d.json", scene3d)
     n_tris = write_stl(scene3d, out / "centro_scene.stl")
     print(f"wrote centro_scene.stl ({n_tris} triangles)")

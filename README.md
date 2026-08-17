@@ -142,15 +142,20 @@ physics and each carrying provenance:
   downlink swings; any inside/outside claim). RECOMMEND_ONLY, blind spots
   listed per alert, layer ban intact.
 - **Attack surface** (`config/attack_catalog.yaml`, floating window in the
-  twin): 15 store-specific attack classes — the offensive mirror of the alert
+  twin): 23 store-specific attack classes — the offensive mirror of the alert
   catalog — each with target, why-this-store, severity, the alert that detects
   it (or an honest **blind spot** with its reason), and a RECOMMEND_ONLY
-  mitigation. 10 are detected, 5 are structural blind spots (perimeter
-  inside/outside, aWIPS intensity, MAC randomization, station-to-station,
-  cold-room shadow). A test asserts every detection references a real alert id
-  and every CLAUDE.md-documented limit is catalogued as a blind spot. The twin
-  serves it at `/attacks.json` and renders it in a draggable, filterable panel
-  (toggle "attack surface ▸").
+  mitigation. This includes 8 **camera/video-system** attacks: only
+  `ip_camera_as_pivot` is detected (it presents a bridge on the wire, caught by
+  `rogue_ap_on_wire`); the other seven are honest blind spots, because this is a
+  Wi-Fi/RF twin with no video analytics — RTSP/ONVIF hijack, camera
+  blinding/tamper, video loop injection, NVR credential compromise, silent
+  camera pivot, video-blindspot exploitation, and `rf_video_desync` (acting in
+  a cell that is both RF-blind and video-blind). A test asserts every detection
+  references a real alert id, every CLAUDE.md-documented limit is catalogued,
+  and every camera blind spot names the video/VMS/NVR side rather than faking an
+  RF detection. The twin serves it at `/attacks.json` and renders it in a
+  draggable, filterable panel (toggle "attack surface ▸").
 - **Sensor tuning** (`docs/sensor_tuning.md`, `config/rf_profiles.yaml`,
   `scripts/propose_reallocation.py` → `data/reallocation_proposal.json`):
   per-zone RF profiles (2.4 GHz as the RTLS band, TPC clamped against RRM,
@@ -161,6 +166,37 @@ physics and each carrying provenance:
   strict dry-run (157-entry request plan from the team's artifacts) and a
   Scanning API v3 receiver that normalises webhooks straight into the
   Layer-3 ingest path.
+
+## Cameras: a second sensing modality, and coverage fusion
+
+The twin now models CCTV alongside the RF sensors — the same three-layer
+discipline, a second modality:
+
+- **Layer 1** (`world/entities.py::Camera`, `data/cameras.json`): 54 parametric
+  cameras (domes on aisle centrelines, aisle/dock bullets, entrance PTZ) as
+  physical fixtures — placement and aim are world facts, no stream URL or
+  credentials.
+- **Layer 2** (`sensing/vision.py`): what each camera can actually *see*.
+  Mirrors the RF propagation model, but light is **binary** — it does not
+  attenuate through a shelf, so any solid fixture on the 3D line of sight blocks
+  the view. A camera at 3.20 m looking down clears a 2.00 m gondola only where
+  the depression geometry allows: the same lesson the RF model teaches,
+  inverted.
+- **Fusion** (`eval/coverage_fusion.py`, `scripts/build_fusion.py` →
+  `data/fusion_report.json`): every floor cell crossed on two questions — can RF
+  position here? can a camera see here? — into four classes: **both**,
+  **rf_only** (locate, can't watch), **video_only** (watch, can't locate), and
+  **neither**. The twin renders it under the "RF↔video fusion" toggle.
+
+The honest result: on the sales floor RF is so strong that cameras are largely
+**redundant** (aisles are `both`, runways are `rf_only`), and the RF-blind
+cells sit behind cold rooms where cameras are **also** blocked — so `video_only`
+is near zero and a handful of `neither` cells survive between the cold rooms.
+Those `neither` cells are the physical realization of the `rf_video_desync`
+attack: a place an adversary is neither located nor seen. The real value of the
+second modality here is not coverage backfill but **independent corroboration**
+for the attack classes RF cannot see at all (camera tampering, RTSP/ONVIF
+hijack, video loop injection) — see the attack surface below.
 
 ## Design notes worth remembering
 
