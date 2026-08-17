@@ -21,6 +21,7 @@ from dlai.attack import AttackAnalyzer
 from dlai.entity import EntityResolver
 from dlai.ingest import normalise_batch, split_security_records
 from dlai.interaction import classify_track
+from dlai.orchestration import IncidentOrchestrator
 from dlai.policy import PolicyEngine
 
 # operator-injectable attacks (id -> button label). Records are built below
@@ -96,8 +97,10 @@ class DlaiRuntime:
         self.policy = PolicyEngine()
         self.attack = AttackAnalyzer()
         self.alerts = AlertEngine()
+        self.orchestrator = IncidentOrchestrator()
         self.tracks: dict[str, dict] = {}
         self.recent_alerts: list[dict] = []
+        self.incidents: list[dict] = []
         self.last_t_ms = 1_754_600_000_000
         self.stats = {"batches": 0, "observations": 0,
                       "positioned": 0, "no_position": 0}
@@ -141,7 +144,9 @@ class DlaiRuntime:
                 "alert_id": al.alert_id, "severity": al.severity,
                 "subject": al.subject, "action": al.action,
                 "confidence": al.confidence})
+            self.orchestrator.consume(al)          # correlate → incident → playbook
         self.recent_alerts = self.recent_alerts[-14:]
+        self.incidents = self.orchestrator.incidents()
 
     # -- attack injection ---------------------------------------------
     def inject(self, attack_id: str, t_ms: int) -> int:

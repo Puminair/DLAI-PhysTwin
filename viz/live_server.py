@@ -123,6 +123,7 @@ class LiveServer:
             frame = json.dumps({
                 "tracks": list(self.tracks.values()),
                 "alerts": self.recent_alerts,
+                "incidents": self.dlai.incidents,
                 "stats": self.stats,
                 "band": self.band,
             })

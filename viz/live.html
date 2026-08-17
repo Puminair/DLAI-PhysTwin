@@ -32,6 +32,35 @@
   #legend{position:fixed;bottom:10px;left:10px;color:#8fa1b8;z-index:2;
     background:rgba(10,14,20,.88);border:1px solid #263042;border-radius:8px;padding:8px 12px}
   .inf{color:#c9a3e0}
+  /* incident orchestration — response driven off the alert stream */
+  #incidents{position:fixed;left:10px;top:330px;width:392px;z-index:2;
+    max-height:calc(100vh - 440px);overflow-y:auto;
+    background:rgba(12,16,22,.92);border:1px solid #263042;border-radius:9px;padding:9px 11px}
+  #incidents h2{font-size:12px;margin:0 0 2px;color:#e8eef7}
+  #incidents .sub{font-size:10px;color:#8fa1b8;margin-bottom:8px}
+  .inc{border:1px solid #2a3648;border-radius:8px;padding:8px 9px;margin-bottom:8px;
+    background:rgba(255,255,255,.02)}
+  .inc .top{display:flex;align-items:center;gap:8px}
+  .inc .pri{font-size:10px;font-weight:800;padding:1px 7px;border-radius:6px;color:#fff}
+  .P1{background:#c0304a}.P2{background:#d9662a}.P3{background:#c8961f}.P4{background:#4a5a70}
+  .inc .ttl{font-weight:700;font-size:12.5px;color:#e8eef7}
+  .inc .subj{font-size:10px;color:#8fa1b8;margin:3px 0 6px}
+  .chain{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:7px}
+  .chain .st{font-size:9.5px;color:#aab6c8;background:#1a2333;border:1px solid #2f3d52;
+    border-radius:10px;padding:1px 7px}
+  .chain .st.on{color:#ffd07a;border-color:#7a5c2a;background:#2a2114}
+  .pb{list-style:none;margin:0;padding:0;counter-reset:s}
+  .pb li{position:relative;padding:3px 0 3px 22px;font-size:11px;color:#c3c2b7;
+    border-top:1px solid #1c2431}
+  .pb li:first-child{border-top:none}
+  .pb li::before{counter-increment:s;content:counter(s);position:absolute;left:0;top:3px;
+    width:15px;height:15px;border-radius:50%;background:#243247;color:#9fb4cf;
+    font-size:9px;font-weight:700;text-align:center;line-height:15px}
+  .pb .ph{color:#7fbfe0;font-weight:700;text-transform:uppercase;font-size:9px;
+    letter-spacing:.04em;margin-right:5px}
+  .pb .rat{color:#7d8ea0;font-size:10px;display:block;margin-top:1px}
+  .recmode{font-size:9px;color:#8fd0a0;border:1px solid #2f5c40;border-radius:5px;
+    padding:0 5px;margin-left:auto}
 </style>
 </head>
 <body>
@@ -46,6 +75,11 @@
   <label><input type="checkbox" id="t_links" checked> heard-by links</label>
   <label><input type="checkbox" id="t_plan"> plan view</label>
   <div id="stats">connecting…</div>
+</div>
+<div id="incidents">
+  <h2>DLAI orchestration — incident response</h2>
+  <div class="sub">correlated off the alert stream · RECOMMEND_ONLY playbooks</div>
+  <div id="inclist"></div>
 </div>
 <div id="alerts">
   <h2>DLAI recommendations (RECOMMEND_ONLY)</h2>
@@ -246,6 +280,22 @@ function connect(){
       `<span style="color:#8fa1b8">[${a.severity}]</span><br>`+
       `<span style="color:#aab6c8">${a.subject}</span> — ${a.action}</div>`).join("")
       || `<div style="color:#8fa1b8">no recommendations yet</div>`;
+
+    const ALLST=["reconnaissance","initial-access","defense-evasion","lateral-movement","impact"];
+    const il=document.getElementById("inclist");
+    il.innerHTML = (st.incidents||[]).map(inc=>{
+      const present=new Set((inc.kill_chain||[]).map(k=>k.stage));
+      const chain=ALLST.map(s=>`<span class="st${present.has(s)?" on":""}">${s.replace('-',' ')}</span>`).join("");
+      const pb=(inc.playbook||[]).map(s=>
+        `<li><span class="ph">${s.phase}</span>${s.action}<span class="rat">${s.rationale}</span></li>`).join("");
+      return `<div class="inc"><div class="top">`+
+        `<span class="pri ${inc.priority}">${inc.priority}</span>`+
+        `<span class="ttl">${inc.title}</span>`+
+        `<span class="recmode">${inc.mode}</span></div>`+
+        `<div class="subj">${inc.incident_id} · ${(inc.subjects||[]).length} subject(s) · `+
+        `${(inc.alert_ids||[]).length} alert(s)</div>`+
+        `<div class="chain">${chain}</div><ol class="pb">${pb}</ol></div>`;
+    }).join("") || `<div style="color:#8fa1b8;font-size:11px">no incidents — inject an attack</div>`;
   };
   ws.onclose=()=>setTimeout(connect,1500);
 }

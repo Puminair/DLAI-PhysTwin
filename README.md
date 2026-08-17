@@ -78,7 +78,14 @@ python -m viz.live_server --source data/live_stream.jsonl
 
 Open both. In the physical twin (`:8787`) the **⚔ attack the twin** bar emits a
 catalogue attack to the stream; within a second the DLAI process (`:8788`)
-lights up the matching recommendation. Verified end to end: inject
+lights up the matching recommendation and **orchestrates the response**: its
+incident-response panel (`dlai/orchestration.py`) correlates related alerts into
+one incident — the two rogue alerts sharing a BSSID become a single **P1
+Payment-infrastructure intrusion** — places each on a defensive kill-chain
+(reconnaissance → initial-access → lateral-movement → impact), rolls it up to a
+priority, and lays out an ordered RECOMMEND_ONLY playbook (contain → escalate →
+investigate → evidence → verify), every step gated on human confirmation with
+its rationale attached. The whole orchestration runs off the alert stream alone. Verified end to end: inject
 `rogue_ap_on_pos_vlan` in the twin and the DLAI fires `rogue_ap_on_wire` +
 `rogue_ap_on_pos_vlan`; inject `cart_mac_clone` and it fires
 `cart_mac_duplicate`. The shared Layer-3 logic and the attack record shapes
