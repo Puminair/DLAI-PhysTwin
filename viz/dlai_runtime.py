@@ -129,21 +129,27 @@ class DlaiRuntime:
                 "variance": est.variance_m2, "n_aps": est.n_aps,
                 "heard": heard[:8], "flicker": track.flicker_transitions,
                 "confidence": est.confidence, "manufacturer": obs.manufacturer,
-                "gaps": est.gaps}
+                "gaps": est.gaps, "interaction": "—"}
 
         for rec in split_security_records(batch):
             a = self.attack.consume(rec)
             if a is not None:
                 self.alerts.consume_assessment(a)
+        # interaction classification (dwell/transit/checkout/exit) — computed
+        # once per track and reused for the policy engine
         for track in self.resolver.tracks.values():
-            for rec in self.policy.evaluate_track(track, classify_track(track)):
+            interactions = classify_track(track)
+            if interactions and track.mac in self.tracks:
+                self.tracks[track.mac]["interaction"] = interactions[-1].kind
+            for rec in self.policy.evaluate_track(track, interactions):
                 self.alerts.consume_recommendation(rec)
 
         for al in self.alerts.evaluate():
             self.recent_alerts.append({
                 "alert_id": al.alert_id, "severity": al.severity,
                 "subject": al.subject, "action": al.action,
-                "confidence": al.confidence})
+                "confidence": al.confidence,
+                "blind_spots": list(al.blind_spots or [])})
             self.orchestrator.consume(al)          # correlate → incident → playbook
         self.recent_alerts = self.recent_alerts[-14:]
         self.incidents = self.orchestrator.incidents()

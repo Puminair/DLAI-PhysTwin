@@ -68,7 +68,8 @@ class LiveServer:
 
     @property
     def stats(self):
-        return {**self.dlai.stats, "source": str(self.source), "live": True}
+        return {**self.dlai.stats, "source": str(self.source), "live": True,
+                "stream_t_ms": self.dlai.last_t_ms}
 
     def _ingest_batch(self, batch: dict) -> None:
         self.dlai.ingest_batch(batch)
@@ -100,14 +101,22 @@ class LiveServer:
         while True:
             lines = []
             if self.source.exists():
-                with open(self.source, "r", encoding="utf-8") as fh:
+                with open(self.source, "rb") as fh:      # binary: exact offsets
                     fh.seek(pos)
-                    for line in fh:
-                        if line.strip():
-                            lines.append(line)
-                    pos = fh.tell()
+                    chunk = fh.read()
+                # only consume up to the last COMPLETE line; a trailing partial
+                # line (the producer mid-write) is left for the next tick
+                end = chunk.rfind(b"\n")
+                if end >= 0:
+                    pos += end + 1
+                    for raw in chunk[:end + 1].split(b"\n"):
+                        if raw.strip():
+                            lines.append(raw.decode("utf-8", "replace"))
             for line in lines:
-                batch = json.loads(line)
+                try:
+                    batch = json.loads(line)
+                except (ValueError, json.JSONDecodeError):
+                    continue                 # skip a malformed line, never crash
                 t_ms = batch.get("deliveredAt", 0)
                 if base_ms is None:
                     base_ms, base_wall = t_ms, asyncio.get_event_loop().time()
@@ -116,6 +125,9 @@ class LiveServer:
                 delay = target - asyncio.get_event_loop().time()
                 if delay > 0:
                     await asyncio.sleep(min(delay, 3.0))
+                else:
+                    await asyncio.sleep(0)   # catching up a backlog: yield so
+                    #                          the server keeps accepting sockets
                 self._ingest_batch(batch)
             await asyncio.sleep(0.5)   # tail: wait for more appended lines
 
