@@ -169,11 +169,30 @@ class Incident:
         steps = PLAYBOOKS.get(self.type, PLAYBOOKS["monitoring"])
         return [dict(s) for s in steps]
 
+    def stop_point(self) -> dict:
+        """The recommended point to STOP the attack — where a single
+        RECOMMEND_ONLY action breaks the kill-chain. It is the first
+        playbook step, tied to the earliest kill-chain stage the incident
+        has reached: act there and the chain does not progress to impact.
+        This is the one decision to make first."""
+        present = [s for s in STAGE_ORDER if s in self.stages]
+        stage = present[0] if present else "impact"
+        step = (PLAYBOOKS.get(self.type) or PLAYBOOKS["monitoring"])[0]
+        at_impact = "impact" in self.stages
+        note = ("chain already at impact — contain now to limit the damage"
+                if at_impact else
+                f"break the chain at {stage.replace('-', ' ')} — before it "
+                "reaches impact")
+        return {"stage": stage, "phase": step["phase"], "action": step["action"],
+                "rationale": step["rationale"], "note": note,
+                "at_impact": at_impact, "step_index": 0}
+
     def as_dict(self) -> dict:
         return {"incident_id": self.incident_id, "type": self.type,
                 "title": self.title, "priority": self.priority,
                 "subjects": sorted(self.subjects), "alert_ids": self.alert_ids,
                 "kill_chain": self.kill_chain(), "playbook": self.playbook(),
+                "stop_point": self.stop_point(),
                 "mode": MODE, "first_ms": self.first_ms, "last_ms": self.last_ms}
 
 

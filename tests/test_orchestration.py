@@ -77,6 +77,25 @@ def test_priority_rolls_up_to_the_worst_alert():
     assert orc.incidents()[0]["priority"] == "P2"   # high → P2 (no POS)
 
 
+def test_stop_point_is_the_earliest_stage_and_first_action():
+    orc = IncidentOrchestrator()
+    orc.consume(FakeAlert("rogue_ap_on_wire", "high", "x", 1))       # initial-access
+    orc.consume(FakeAlert("rogue_ap_on_pos_vlan", "high", "x", 2))   # lateral-movement
+    sp = orc.incidents()[0]["stop_point"]
+    assert sp["stage"] == "initial-access", "break the chain at the earliest stage"
+    assert "port" in sp["action"].lower(), "stop action is the contain step"
+    assert sp["at_impact"] is False
+    assert "before it reaches impact" in sp["note"]
+
+
+def test_stop_point_flags_when_impact_already_reached():
+    orc = IncidentOrchestrator()
+    orc.consume(FakeAlert("cart_mac_duplicate", "high", "m", 1))     # impact
+    sp = orc.incidents()[0]["stop_point"]
+    assert sp["at_impact"] is True
+    assert "impact" in sp["note"].lower()
+
+
 def test_distinct_campaigns_stay_separate():
     orc = IncidentOrchestrator()
     orc.consume(FakeAlert("rogue_ap_on_wire", "high", "a", 1))

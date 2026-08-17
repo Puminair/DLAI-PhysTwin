@@ -43,6 +43,47 @@
   .inc.brief .next b{color:var(--accent);font-family:var(--mono);font-size:10px;
     text-transform:uppercase;letter-spacing:.05em;margin-right:6px}
   .rolehint{font-size:11px;color:var(--muted);padding:2px 6px}
+  /* recommended stop point (break the kill-chain here) */
+  .stop{display:flex;gap:9px;align-items:flex-start;margin:2px 0 10px;padding:8px 11px;
+    border-radius:7px;background:rgba(192,48,74,.12);border:1px solid #5a2333}
+  .stop .icn{font-size:15px;line-height:1.2}
+  .stop .txt{font-size:12px;color:#f0c8ce}
+  .stop .txt b{color:#ff8a9a;font-family:var(--mono);text-transform:uppercase;font-size:9.5px;letter-spacing:.05em}
+  .stop .act{color:var(--ink);display:block;margin-top:2px;font-weight:600}
+  .stop .note{color:#c98a94;font-size:10.5px;display:block;margin-top:2px}
+  .pb li.stopstep::before{background:#c0304a;color:#fff;content:"⛔";font-size:9px}
+  .pb li.stopstep{background:rgba(192,48,74,.07);border-radius:5px}
+  /* general dashboard (overview role) */
+  #overview{display:none;flex-direction:column;gap:14px;padding:16px 20px;overflow:auto;flex:1}
+  body[data-role="overview"] #overview{display:flex}
+  body[data-role="overview"] .engines,
+  body[data-role="overview"] .grid,
+  body[data-role="overview"] .entities{display:none}
+  .ov-pri{display:flex;gap:12px}
+  .ov-tile{flex:1;border:1px solid var(--line);border-radius:10px;padding:13px 16px;background:var(--panel)}
+  .ov-tile .n{font-family:var(--mono);font-size:30px;font-weight:700;font-variant-numeric:tabular-nums}
+  .ov-tile .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  .ov-tile.p1 .n{color:#e85a5b}.ov-tile.p2 .n{color:#d9662a}.ov-tile.p3 .n{color:#e0a53e}
+  .ov-tile.p4 .n{color:#7c8da0}.ov-tile.tot .n{color:var(--ink)}
+  .ov-now{border:1px solid #5a2333;border-radius:12px;background:rgba(192,48,74,.1);padding:16px 20px}
+  .ov-now .k{font-family:var(--mono);font-size:10px;color:#ff8a9a;text-transform:uppercase;letter-spacing:.08em}
+  .ov-now h3{margin:5px 0 3px;font-size:18px;color:var(--ink)}
+  .ov-now .stage{font-family:var(--mono);font-size:11px;color:#f0c8ce}
+  .ov-now .note{color:#c98a94;font-size:11.5px;margin-top:4px}
+  .ov-seq{border:1px solid var(--line);border-radius:11px;background:var(--panel);padding:14px 18px}
+  .ov-seq h3{margin:0 0 10px;font-size:13px;color:var(--ink2);text-transform:uppercase;letter-spacing:.06em}
+  .ov-seq ol{list-style:none;margin:0;padding:0;counter-reset:d}
+  .ov-seq li{position:relative;padding:9px 0 9px 34px;border-top:1px solid var(--line);display:flex;
+    align-items:baseline;gap:10px}
+  .ov-seq li:first-child{border-top:none}
+  .ov-seq li::before{counter-increment:d;content:counter(d);position:absolute;left:0;top:9px;width:22px;height:22px;
+    border-radius:50%;background:#22304a;color:#9fb4cf;font-family:var(--mono);font-size:11px;font-weight:700;
+    text-align:center;line-height:22px}
+  .ov-seq .pri{flex-shrink:0}
+  .ov-seq .ttl{font-weight:600;color:var(--ink)}
+  .ov-seq .arrow{color:var(--muted);margin:0 4px}
+  .ov-seq .stop{margin:0;padding:0;border:none;background:none;display:inline;color:var(--ink2);font-size:12.5px}
+  .ov-seq .stg{font-family:var(--mono);font-size:10px;color:#ff8a9a;text-transform:uppercase}
   header .clock b{color:var(--good);font-variant-numeric:tabular-nums}
   header .src{font-family:var(--mono);font-size:11px;color:var(--muted);padding-left:14px}
   .stats{display:flex;border-bottom:1px solid var(--line);background:var(--panel2)}
@@ -126,6 +167,7 @@
   <header>
     <h1>DLAI WiFi</h1><span class="live">CONSOLE</span>
     <div class="roles" id="roles">
+      <button data-role="overview">Overview</button>
       <button data-role="security" class="on">Security (SOC)</button>
       <button data-role="manager">Store manager</button>
       <button data-role="network">Network / RF</button>
@@ -135,6 +177,11 @@
     <span class="src" id="src"></span>
   </header>
   <div class="stats" id="stats"></div>
+  <div id="overview">
+    <div class="ov-pri" id="ovPri"></div>
+    <div class="ov-now" id="ovNow"></div>
+    <div class="ov-seq"><h3>Decision sequence — recommended order of action</h3><ol id="ovSeq"></ol></div>
+  </div>
   <div class="engines" id="engines"></div>
   <div class="grid">
     <div class="col" id="colInc">
@@ -169,6 +216,8 @@ const CART_IDS=new Set(["cart_mac_duplicate","cart_impossible_motion","exit_with
 const NET_IDS=new Set(["deauth_flood","containment_active_rtls_risk","sensor_silent"]);
 let ROLE="security", lastFrame=null;
 const ROLES={
+  overview:{incidents:i=>i, alerts:_=>[], entities:_=>[], incMode:"full",
+            inchdr:"", alhdr:""},
   security:{incidents:i=>i, alerts:a=>a, entities:t=>t, incMode:"full",
             inchdr:"Incident response", alhdr:"Alert stream"},
   manager:{incidents:i=>i, alerts:_=>[], entities:_=>[], incMode:"brief",
@@ -243,12 +292,40 @@ function renderIncidents(incs, mode){
     let chain="";
     ALLST.forEach((s,i)=>{ if(i) chain+=`<span class="ar${present.has(s)&&present.has(ALLST[i-1])?" on":""}">→</span>`;
       chain+=`<span class="st${present.has(s)?" on":""}">${s.replace('-',' ')}</span>`; });
-    const pb=(inc.playbook||[]).map(x=>
-      `<li><span class="ph">${x.phase}</span>${x.action}<span class="rat">${x.rationale}</span></li>`).join("");
+    const sp=inc.stop_point||{};
+    const stop=`<div class="stop"><span class="icn">⛔</span><span class="txt">`+
+      `<b>recommended stop point — ${(sp.stage||"").replace('-',' ')}</b>`+
+      `<span class="act">${sp.action||""}</span><span class="note">${sp.note||""}</span></span></div>`;
+    const si=(sp.step_index??-1);
+    const pb=(inc.playbook||[]).map((x,ix)=>
+      `<li class="${ix===si?'stopstep':''}"><span class="ph">${x.phase}</span>${x.action}<span class="rat">${x.rationale}</span></li>`).join("");
     return `<div class="inc">${head}`+
       `<div class="subj">${inc.incident_id} · ${(inc.subjects||[]).length} subject(s) · ${(inc.alert_ids||[]).length} alert(s)</div>`+
-      `<div class="chain">${chain}</div><ol class="pb">${pb}</ol></div>`;
+      stop+`<div class="chain">${chain}</div><ol class="pb">${pb}</ol></div>`;
   }).join("") || `<div class="empty">Nothing for this role right now.</div>`;
+}
+function renderOverview(incs){
+  const order={P1:0,P2:1,P3:2,P4:3};
+  const cnt={P1:0,P2:0,P3:0,P4:0};
+  incs.forEach(i=>{cnt[i.priority]=(cnt[i.priority]||0)+1;});
+  document.getElementById("ovPri").innerHTML=
+    [["tot","total",incs.length],["p1","P1 critical",cnt.P1],["p2","P2",cnt.P2],
+     ["p3","P3",cnt.P3],["p4","P4",cnt.P4]].map(([c,l,n])=>
+      `<div class="ov-tile ${c}"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("");
+  const sorted=incs.slice().sort((a,b)=>(order[a.priority]??9)-(order[b.priority]??9));
+  const top=sorted[0];
+  document.getElementById("ovNow").innerHTML = top ?
+    `<div class="k">⛔ act now — recommended stop point</div>`+
+    `<h3><span class="pri ${top.priority}">${top.priority}</span> ${top.title}</h3>`+
+    `<div class="stage">${(top.stop_point.stage||"").replace('-',' ')} · ${top.stop_point.action}</div>`+
+    `<div class="note">${top.stop_point.note||""}</div>`
+    : `<div class="k">all clear</div><h3>No open incidents</h3>`;
+  document.getElementById("ovSeq").innerHTML = sorted.map(i=>
+    `<li><span class="pri ${i.priority}">${i.priority}</span>`+
+    `<span class="ttl">${i.title}</span><span class="arrow">→ stop at</span>`+
+    `<span class="stg">${(i.stop_point.stage||"").replace('-',' ')}</span>`+
+    `<span class="stop">: ${i.stop_point.action}</span></li>`).join("")
+    || `<li style="padding-left:0">Nothing to act on.</li>`;
 }
 function render(st){
   lastFrame=st;
@@ -256,6 +333,7 @@ function render(st){
   const tracks=st.tracks||[], alerts=st.alerts||[], incs=st.incidents||[];
   const located=tracks.filter(t=>t.located).length;
   statTiles(s,alerts.length,incs.length,located);
+  renderOverview(incs);
   engines({ingest:s.observations||0, resolve:s.positioned||0,
     classify:tracks.filter(t=>t.interaction&&t.interaction!=="—").length,
     policy:alerts.filter(a=>POLICY_IDS.has(a.alert_id)).length,
